@@ -1,7 +1,61 @@
-'use strict';
+'use strict'
 
 
 var RE_SPACE = /\s/
+
+
+function glob(pattern, str) {
+  var patterns = pattern.split(/\s+/)
+
+  for (var i = 0, len = patterns.length; i < len; i++) {
+    var negate = false
+
+    pattern = patterns[i]
+    if (pattern.charAt(0) === '!') {
+      negate = true
+      pattern = pattern.slice(1)
+    }
+    pattern = pattern.replace(/\./g, '\\.')
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.?')
+      .replace(/,/g, '|')
+
+    if (negate ^ new RegExp('(?:' + pattern + ')').test(str)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+
+/*
+ * Query ssh config by host
+ */
+function query(host) {
+  var obj = {}
+  var param
+
+  for (param in this) {
+    if (+param < this.length) continue
+    obj[param] = this[param]
+  }
+
+  for (var i = 0, len = this.length; i < len; i++) {
+    var section = this[i]
+
+    if (section.Host && glob(section.Host, host)) {
+      for (param in section) {
+        if (!(param in obj)) obj[param] = section[param]
+      }
+    }
+    else if (section.Match) {
+      // TODO
+    }
+  }
+
+  return obj
+}
 
 
 exports.parse = function(str) {
@@ -26,7 +80,7 @@ exports.parse = function(str) {
     var opt = ''
 
     space()
-    while (chr && chr !== ' ') {
+    while (chr && chr !== ' ' && chr !== '=') {
       opt += chr
       next()
     }
@@ -38,6 +92,9 @@ exports.parse = function(str) {
     var val = ''
 
     space()
+    if (chr === '=') next()
+    space()
+
     while (chr && chr !== '\n' && chr !== '\r') {
       val += chr
       next()
@@ -50,19 +107,28 @@ exports.parse = function(str) {
   var configWas = config
 
   while (chr) {
-    var opt = option()
-    var val = value()
+    var param = option()
 
-    if (opt == 'Host') {
+    if (param === 'Host' || param === 'Match') {
       config = configWas
       config = config[hostsIndex++] = {}
     }
 
-    config[opt] = val
+    config[param] = value()
   }
 
   config = configWas
-  config.length = hostsIndex
+
+  Object.defineProperties(config, {
+    length: {
+      value: hostsIndex,
+      enumerable: false
+    },
+    query: {
+      value: query,
+      enumerable: false
+    }
+  })
 
   return config
 }
@@ -71,11 +137,19 @@ exports.parse = function(str) {
 exports.stringify = function(config) {
   var lines = []
 
+  /*
+   * Ouput wild parameters first. Only the parameters specified at the file
+   * beginning can be outside of any section.
+   *
+   * According to ssh_config(5), the first obtained value of parameter will
+   * be used. It is recommended that the general defaults shall be at the end
+   * of the config file, in the `Host *` section.
+   *
+   * So wild parameters cannot be overridden even if there are sections that
+   * match current host. One shall use it with caution.
+   */
   for (var p in config) {
-    // If p is number, skip for now. They are host sections. We'll handle them later.
     if (+p < config.length) continue
-    if (p == 'length') continue
-
     lines.push(p + ' ' + config[p])
   }
 
@@ -83,13 +157,22 @@ exports.stringify = function(config) {
     var section = config[i]
 
     lines.push('')
-    lines.push('Host ' + section.Host)
 
     for (p in section) {
-      if (p == 'Host') continue
-      lines.push('  ' + p + ' ' + section[p])
+      if (p === 'Host' || p === 'Match') {
+        lines.push(p + ' ' + section[p])
+      } else {
+        lines.push('  ' + p + ' ' + section[p])
+      }
     }
   }
 
   return lines.join('\n')
 }
+
+
+/*
+ * export poor man's glob for unit tests. This is private.
+ */
+exports.glob = glob
+
