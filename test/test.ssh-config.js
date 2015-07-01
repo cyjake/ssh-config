@@ -8,6 +8,7 @@ var sshConfig = require('..')
 
 describe('ssh-config', function() {
   var fixture = fs.readFileSync(path.join(__dirname, 'fixture/config'), 'utf-8')
+    .replace(/\r\n/g, '\n')
   var config = sshConfig.parse(fixture)
 
   it('.parse ssh config text into object', function() {
