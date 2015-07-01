@@ -33,6 +33,7 @@ describe('ssh-config', function() {
     expect(opts.ServerAliveInterval).to.eql(80)
 
     opts = config.query('tahoe1')
+    expect(opts.HostName).to.equal('tahoe1.com')
     expect(opts.User).to.equal('nil')
     expect(opts.ForwardAgent).to.equal('true')
     expect(opts.Compression).to.equal('yes')
