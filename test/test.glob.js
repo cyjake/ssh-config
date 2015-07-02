@@ -30,4 +30,8 @@ describe('glob', function() {
     expect(glob('!laputa,castle', 'laputa')).to.be(false)
     expect(glob('!castle,in,the,sky', 'laputa')).to.be(true)
   })
+
+  it('glob the whole string', function() {
+    expect(glob('example', 'example1')).to.be(false)
+  })
 })

@@ -20,7 +20,7 @@ function glob(pattern, str) {
       .replace(/\?/g, '.?')
       .replace(/,/g, '|')
 
-    if (negate ^ new RegExp('(?:' + pattern + ')').test(str)) {
+    if (negate ^ new RegExp('^(?:' + pattern + ')$').test(str)) {
       return true
     }
   }
