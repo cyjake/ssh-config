@@ -3,6 +3,8 @@
 var expect = require('expect.js')
 var fs = require('fs')
 var path = require('path')
+var heredoc = require('heredoc').strip
+
 var sshConfig = require('..')
 
 
@@ -11,7 +13,7 @@ function readFile(fpath) {
     .replace(/\r\n/g, '\n')
 }
 
-describe('ssh-config', function() {
+describe('.parse and .stringify', function() {
   var fixture = readFile('fixture/config')
   var config = sshConfig.parse(fixture)
 
@@ -26,13 +28,29 @@ describe('ssh-config', function() {
     })
   })
 
+  it('.parse parameters with their names and values separated by =', function() {
+    var config2 = sshConfig.parse(heredoc(function() {/*
+      Host=tahoe4
+        HostName=tahoe4.com
+        User=keanu
+    */}))
+
+    expect(config2).to.eql({
+      '0': {
+        Host: 'tahoe4',
+        HostName: 'tahoe4.com',
+        User: 'keanu'
+      }
+    })
+  })
+
   it('.stringify the parsed object back to string', function() {
     expect(fixture).to.contain(sshConfig.stringify(config))
   })
 })
 
 
-describe('ssh-config helper methods', function() {
+describe('.query', function() {
   var config = sshConfig.parse(readFile('fixture/config'))
 
   it('.query ssh config by host', function() {
@@ -60,6 +78,17 @@ describe('ssh-config helper methods', function() {
     })
   })
 
+  it('.query ssh config that uses Match', function() {
+    var config2 = sshConfig.parse(heredoc(function() {/*
+      Match host tahoe4
+        HostName tahoe4.com
+        User keanu
+    */}))
+
+    // not implemented yet.
+    expect(config2.query('tahoe4')).to.eql({})
+  })
+
   it('.query the whole host string', function() {
     var config2 = sshConfig.parse(readFile('fixture/config2'))
 
@@ -71,8 +100,21 @@ describe('ssh-config helper methods', function() {
       IdentityFile: '/path/to/key'
     })
   })
+})
 
-  it('.find section', function() {
+
+describe('.find', function() {
+  var config = sshConfig.parse(readFile('fixture/config'))
+
+  it('cannot find nothing', function() {
+    expect(function() {
+      config.find()
+      config.find({})
+    })
+      .to.throwException()
+  })
+
+  it('.find Host section', function() {
     expect(config.find({ Host: 'tahoe1' })).to.eql({
       Host: 'tahoe1',
       HostName: 'tahoe1.com',
@@ -85,7 +127,31 @@ describe('ssh-config helper methods', function() {
     })
   })
 
-  it('check duplications before .append', function() {
+  it('.find Match section', function() {
+    // Match related features are not ready yet.
+    expect(config.find({ Match: 'host tahoe1' })).to.be(null)
+  })
+})
+
+
+describe('.append', function() {
+  var config = sshConfig.parse(readFile('fixture/config'))
+
+  it('cannot .append invalid section', function() {
+    expect(function() {
+      config.append()
+      config.append({})
+
+      config.append({
+        HostName: 'tahoe5.com',
+        User: 'keanu'
+      })
+    })
+      .to.throwException()
+  })
+
+  it('.append Host section', function() {
+    // check duplications before .append
     expect(function() {
       config.append({
         Host: 'tahoe1',
@@ -93,9 +159,7 @@ describe('ssh-config helper methods', function() {
       })
     })
       .to.throwException(/duplicate/i)
-  })
 
-  it('.append section', function() {
     config.append({
       Host: 'tahoe3',
       HostName: 'tahoe3.com',
@@ -109,8 +173,42 @@ describe('ssh-config helper methods', function() {
     })
   })
 
+  it('.append Match section', function() {
+    config.append({
+      Match: 'host tahoe4',
+      HostName: 'tahoe4.com'
+    })
+
+    // Match parameter is not fully implemented yet.
+    expect(config.find({ Match: 'host tahoe4'})).to.eql({
+      Match: 'host tahoe4',
+      HostName: 'tahoe4.com'
+    })
+
+    expect(function() {
+      config.append({ Match: 'host tahoe4'})
+    })
+      .to.throwException(/duplicate/i)
+  })
+})
+
+
+describe('.remove', function() {
+  var config = sshConfig.parse(readFile('fixture/config'))
+
   it('.remove section', function() {
-    config.remove({ Host: 'tahoe3' })
-    expect(config.find({ Host: 'tahoe3' })).to.be(null)
+    var length = config.length
+    config.remove({ Host: 'no.such.host' })
+    expect(config.length).to.equal(length)
+
+    config.remove({ Host: 'tahoe2' })
+    expect(config.find({ Host: 'tahoe2' })).to.be(null)
+    expect(config.length).to.equal(length - 1)
+
+    expect(function() {
+      config.remove()
+      config.remove({})
+    })
+      .to.throwException()
   })
 })

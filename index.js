@@ -62,6 +62,10 @@ function query(host) {
  * Append new sections to config
  */
 function append(section) {
+  if (!section || !(section.Host || section.Match)) {
+    throw new Error('Only Host or Match can start new section!')
+  }
+
   for (var i = 0, len = this.length; i < len; i++) {
     if (section.Host && this[i].Host === section.Host) {
       throw new Error('Duplicated Host section!')
@@ -80,7 +84,7 @@ function append(section) {
  * Find section by Host or Match
  */
 function find(opts) {
-  if (!Object.keys(opts).length) {
+  if (!opts || !Object.keys(opts).length) {
     throw new Error('No criteria supplied to find!')
   }
 
@@ -108,7 +112,7 @@ function find(opts) {
 var splice = Array.prototype.splice
 
 function remove(opts) {
-  if (!Object.keys(opts).length) {
+  if (!opts || !Object.keys(opts).length) {
     throw new Error('No criteria supplied to find and remove!')
   }
 
