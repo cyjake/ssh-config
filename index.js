@@ -58,6 +58,104 @@ function query(host) {
 }
 
 
+/*
+ * Append new sections to config
+ */
+function append(section) {
+  for (var i = 0, len = this.length; i < len; i++) {
+    if (section.Host && this[i].Host === section.Host) {
+      throw new Error('Duplicated Host section!')
+    }
+    else if (section.Match && this[i].Match === section.Match) {
+      throw new Error('Duplicated Match section!')
+    }
+  }
+
+  this[this.length++] = section
+  return this
+}
+
+
+/*
+ * Find section by Host or Match
+ */
+function find(opts) {
+  if (!Object.keys(opts).length) {
+    throw new Error('No criteria supplied to find!')
+  }
+
+  for (var i = 0, len = this.length; i < len; i++) {
+    var section = this[i]
+    var found = true
+
+    for (var p in opts) {
+      if (opts[p] !== section[p]) {
+        found = false
+        break
+      }
+    }
+
+    if (found) return section
+  }
+
+  return null
+}
+
+
+/*
+ * Remove section
+ */
+var splice = Array.prototype.splice
+
+function remove(opts) {
+  if (!Object.keys(opts).length) {
+    throw new Error('No criteria supplied to find and remove!')
+  }
+
+  for (var i = this.length - 1; i >= 0; i--) {
+    var section = this[i]
+    var found = true
+
+    for (var p in opts) {
+      if (opts[p] !== section[p]) {
+        found = false
+        break
+      }
+    }
+
+    if (found) splice.call(this, i, 1)
+  }
+}
+
+
+/*
+ * Define helper methods but hide from enumeration.
+ */
+function defineMethods(config) {
+  Object.defineProperties(config, {
+    query: {
+      value: query,
+      enumerable: false
+    },
+    append: {
+      value: append,
+      enumerable: false
+    },
+    find: {
+      value: find,
+      enumerable: false
+    },
+    remove: {
+      value: remove,
+      enumerable: false
+    }
+  })
+}
+
+
+/*
+ * Parse ssh config text into structured object.
+ */
 exports.parse = function(str) {
   var i = 0
   var chr = next()
@@ -118,22 +216,20 @@ exports.parse = function(str) {
   }
 
   config = configWas
-
-  Object.defineProperties(config, {
-    length: {
-      value: hostsIndex,
-      enumerable: false
-    },
-    query: {
-      value: query,
-      enumerable: false
-    }
+  Object.defineProperty(config, 'length', {
+    value: hostsIndex,
+    writable: true,
+    enumerable: false
   })
+  defineMethods(config)
 
   return config
 }
 
 
+/*
+ * Stringify structured object into ssh config text
+ */
 exports.stringify = function(config) {
   var lines = []
 
