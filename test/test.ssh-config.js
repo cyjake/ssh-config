@@ -107,11 +107,8 @@ describe('.find', function() {
   var config = sshConfig.parse(readFile('fixture/config'))
 
   it('cannot find nothing', function() {
-    expect(function() {
-      config.find()
-      config.find({})
-    })
-      .to.throwException()
+    expect(function() { config.find() }).to.throwException()
+    expect(function() { config.find({}) }).to.throwException()
   })
 
   it('.find Host section', function() {
@@ -138,10 +135,9 @@ describe('.append', function() {
   var config = sshConfig.parse(readFile('fixture/config'))
 
   it('cannot .append invalid section', function() {
+    expect(function() { config.append() }).to.throwException()
+    expect(function() { config.append({}) }).to.throwException()
     expect(function() {
-      config.append()
-      config.append({})
-
       config.append({
         HostName: 'tahoe5.com',
         User: 'keanu'
@@ -205,10 +201,7 @@ describe('.remove', function() {
     expect(config.find({ Host: 'tahoe2' })).to.be(null)
     expect(config.length).to.equal(length - 1)
 
-    expect(function() {
-      config.remove()
-      config.remove({})
-    })
-      .to.throwException()
+    expect(function() { config.remove() }).to.throwException()
+    expect(function() { config.remove({}) }).to.throwException()
   })
 })
