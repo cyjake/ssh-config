@@ -255,8 +255,9 @@ exports.stringify = function(config) {
 
   for (var i = 0; i < config.length; i++) {
     var section = config[i]
-
-    lines.push('')
+    //do not begin with a leading blank line
+    if (lines.length !== 0)
+      lines.push('')
 
     for (p in section) {
       if (p === 'Host' || p === 'Match') {
