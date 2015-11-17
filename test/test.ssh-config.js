@@ -13,7 +13,7 @@ function readFile(fpath) {
     .replace(/\r\n/g, '\n')
 }
 
-describe('.parse and .stringify', function() {
+describe('.parse', function() {
   var fixture = readFile('fixture/config')
   var config = sshConfig.parse(fixture)
 
@@ -43,9 +43,35 @@ describe('.parse and .stringify', function() {
       }
     })
   })
+})
+
+
+describe('.stringify', function() {
+  var fixture = readFile('fixture/config')
+  var config = sshConfig.parse(fixture)
 
   it('.stringify the parsed object back to string', function() {
     expect(fixture).to.contain(sshConfig.stringify(config))
+  })
+
+  it('.stringify sections without leading blank line', function() {
+    var config = {
+      '0': {
+        Host: 'tahoe4',
+        HostName: 'tahoe4.com',
+        User: 'keanu'
+      }
+    }
+    Object.defineProperty(config, 'length', {
+      value: 1,
+      enumerable: false
+    })
+
+    expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
+      Host tahoe4
+        HostName tahoe4.com
+        User keanu
+    */}).trim())
   })
 })
 
