@@ -1,7 +1,7 @@
 {
   "name": "ssh-config",
   "description": "SSH config parser and stringifier",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "dotnil <jakeplus@gmail.com>",
   "repository": {
     "type": "git",
