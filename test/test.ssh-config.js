@@ -83,7 +83,7 @@ describe('.query', function() {
     var opts = config.query('tahoe2')
 
     expect(opts.User).to.equal('nil')
-    expect(opts.IdentityFile).to.equal('~/.ssh/id_rsa')
+    expect(opts.IdentityFile).to.eql(['~/.ssh/id_rsa', '~/.ssh/ids/%h/id_rsa', '~/.ssh/ids/%h/%r/id_rsa'].reverse())
 
     // the first obtained parameter value will be used. So there's no way to
     // override parameter values.
@@ -96,7 +96,7 @@ describe('.query', function() {
       ControlPath: '~/.ssh/master-%r@%h:%p',
       Host: 'tahoe1',
       HostName: 'tahoe1.com',
-      IdentityFile: '~/.ssh/id_rsa',
+      IdentityFile: ['~/.ssh/id_rsa', '~/.ssh/ids/%h/id_rsa', '~/.ssh/ids/%h/%r/id_rsa'].reverse(),
       ProxyCommand: 'ssh -q gateway -W %h:%p',
       ServerAliveInterval: '80',
       User: 'nil',
@@ -146,7 +146,7 @@ describe('.find', function() {
 
     expect(config.find({ Host: '*' })).to.eql({
       Host: '*',
-      IdentityFile: '~/.ssh/id_rsa'
+      IdentityFile: ['~/.ssh/id_rsa', '~/.ssh/ids/%h/id_rsa', '~/.ssh/ids/%h/%r/id_rsa'].reverse(),
     })
   })
 
