@@ -216,7 +216,15 @@ exports.parse = function(str) {
       config = config[hostsIndex++] = {}
     }
 
-    config[param] = value()
+    var val = value()
+    if (config[param]) {
+      if (!Array.isArray(config[param])) {
+        config[param] = [config[param]]
+      }
+      config[param].push(val)
+    } else {
+      config[param] = val
+    }
   }
 
   config = configWas
@@ -262,10 +270,17 @@ exports.stringify = function(config) {
     }
 
     for (p in section) {
+      var val = section[p]
       if (p === 'Host' || p === 'Match') {
-        lines.push(p + ' ' + section[p])
+        lines.push(p + ' ' + val)
       } else {
-        lines.push('  ' + p + ' ' + section[p])
+        if (!Array.isArray(val)) {
+          val = [val]
+        }
+
+        val.forEach(function(v) {
+          lines.push('  ' + p + ' ' + v)
+        })
       }
     }
   }
@@ -278,4 +293,3 @@ exports.stringify = function(config) {
  * export poor man's glob for unit tests. This is private.
  */
 exports.glob = glob
-
