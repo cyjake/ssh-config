@@ -1,7 +1,8 @@
 'use strict'
 
 var expect = require('expect.js')
-var glob = require('..').glob
+
+var glob = require('../lib/glob')
 
 
 describe('glob', function() {

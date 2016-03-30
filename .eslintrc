@@ -1,6 +1,7 @@
 {
   "env": {
-    "node": true
+    "node": true,
+    "esnext": true
   },
   "rules": {
     "curly": [2, "multi-line"],
@@ -10,6 +11,7 @@
     "strict": [2, "global"],
     "no-underscore-dangle": 0,
     "no-use-before-define": [2, "nofunc"],
-    "no-unused-vars": [2, { "vars": "all", "args": "none" }]
+    "no-unused-vars": [2, { "vars": "all", "args": "none" }],
+    "no-undef": 2
   }
 }
