@@ -1,4 +1,13 @@
 
+1.0.0 / 2016-05-05
+==================
+
+  * Fix: updated readme to be reflect 1.x changes
+  * Breaking: parse into a simple ast
+
+This is a breaking change. The parse result is now a subclass of Array instead of vanila Object.
+
+
 0.2.1 / 2015-11-17
 ==================
 
