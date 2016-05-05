@@ -1,281 +1,255 @@
 'use strict'
 
+let glob = require('./lib/glob')
 
-var RE_SPACE = /\s/
+let RE_SPACE = /\s/
+let RE_LINE_BREAK = /\r|\n/
+let RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 
-
-function glob(pattern, str) {
-  var patterns = pattern.split(/\s+/)
-
-  for (var i = 0, len = patterns.length; i < len; i++) {
-    var negate = false
-
-    pattern = patterns[i]
-    if (pattern.charAt(0) === '!') {
-      negate = true
-      pattern = pattern.slice(1)
-    }
-    pattern = pattern.replace(/\./g, '\\.')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.?')
-      .replace(/,/g, '|')
-
-    if (negate ^ new RegExp('^(?:' + pattern + ')$').test(str)) {
-      return true
-    }
-  }
-
-  return false
-}
+let DIRECTIVE = 1
+let COMMENT = 2
 
 
-/*
- * Query ssh config by host
- */
-function query(host) {
-  var obj = {}
-  var param
-
-  for (param in this) {
-    if (+param < this.length) continue
-    obj[param] = this[param]
-  }
-
-  for (var i = 0, len = this.length; i < len; i++) {
-    var section = this[i]
-
-    if (section.Host && glob(section.Host, host)) {
-      for (param in section) {
-        if (!(param in obj)) obj[param] = section[param]
-      }
-    }
-    else if (section.Match) {
-      // TODO
-    }
-  }
-
-  return obj
-}
-
-
-/*
- * Append new sections to config
- */
-function append(section) {
-  if (!section || !(section.Host || section.Match)) {
-    throw new Error('Only Host or Match can start new section!')
-  }
-
-  for (var i = 0, len = this.length; i < len; i++) {
-    if (section.Host && this[i].Host === section.Host) {
-      throw new Error('Duplicated Host section!')
-    }
-    else if (section.Match && this[i].Match === section.Match) {
-      throw new Error('Duplicated Match section!')
-    }
-  }
-
-  this[this.length++] = section
-  return this
-}
-
-
-/*
- * Find section by Host or Match
- */
-function find(opts) {
-  if (!opts || !Object.keys(opts).length) {
-    throw new Error('No criteria supplied to find!')
-  }
-
-  for (var i = 0, len = this.length; i < len; i++) {
-    var section = this[i]
-    var found = true
-
-    for (var p in opts) {
-      if (opts[p] !== section[p]) {
-        found = false
-        break
-      }
-    }
-
-    if (found) return section
-  }
-
-  return null
-}
-
-
-/*
- * Remove section
- */
-var splice = Array.prototype.splice
-
-function remove(opts) {
-  if (!opts || !Object.keys(opts).length) {
-    throw new Error('No criteria supplied to find and remove!')
-  }
-
-  for (var i = this.length - 1; i >= 0; i--) {
-    var section = this[i]
-    var found = true
-
-    for (var p in opts) {
-      if (opts[p] !== section[p]) {
-        found = false
-        break
-      }
-    }
-
-    if (found) splice.call(this, i, 1)
-  }
-}
-
-
-/*
- * Define helper methods but hide from enumeration.
- */
-function defineMethods(config) {
-  Object.defineProperties(config, {
-    query: {
-      value: query,
-      enumerable: false
-    },
-    append: {
-      value: append,
-      enumerable: false
-    },
-    find: {
-      value: find,
-      enumerable: false
-    },
-    remove: {
-      value: remove,
-      enumerable: false
-    }
-  })
-}
-
-
-/*
- * Parse ssh config text into structured object.
- */
-exports.parse = function(str) {
-  var i = 0
-  var chr = next()
-  var config = {}
-
-  str = str.trim()
-
-  function next() {
-    chr = str[i++]
-    return chr
-  }
-
-  function space() {
-    while (RE_SPACE.test(chr)) {
-      next()
-    }
-  }
-
-  function option() {
-    var opt = ''
-
-    space()
-    while (chr && chr !== ' ' && chr !== '=') {
-      opt += chr
-      next()
-    }
-
-    return opt
-  }
-
-  function value() {
-    var val = ''
-
-    space()
-    if (chr === '=') next()
-    space()
-
-    while (chr && chr !== '\n' && chr !== '\r') {
-      val += chr
-      next()
-    }
-
-    return val
-  }
-
-  var hostsIndex = 0
-  var configWas = config
-
-  while (chr) {
-    var param = option()
-
-    if (param === 'Host' || param === 'Match') {
-      config = configWas
-      config = config[hostsIndex++] = {}
-    }
-
-    config[param] = value()
-  }
-
-  config = configWas
-  Object.defineProperty(config, 'length', {
-    value: hostsIndex,
-    writable: true,
-    enumerable: false
-  })
-  defineMethods(config)
-
-  return config
-}
-
-
-/*
- * Stringify structured object into ssh config text
- */
-exports.stringify = function(config) {
-  var lines = []
-
-  /*
-   * Ouput wild parameters first. Only the parameters specified at the file
-   * beginning can be outside of any section.
+class SSHConfig extends Array {
+  /**
+   * Query ssh config by host.
    *
-   * According to ssh_config(5), the first obtained value of parameter will
-   * be used. It is recommended that the general defaults shall be at the end
-   * of the config file, in the `Host *` section.
-   *
-   * So wild parameters cannot be overridden even if there are sections that
-   * match current host. One shall use it with caution.
+   * @return {Object} The applied options of current Host
    */
-  for (var p in config) {
-    if (+p < config.length) continue
-    lines.push(p + ' ' + config[p])
-  }
-
-  for (var i = 0; i < config.length; i++) {
-    var section = config[i]
-
-    //do not begin with a leading blank line
-    if (lines.length !== 0) {
-      lines.push('')
-    }
-
-    for (p in section) {
-      if (p === 'Host' || p === 'Match') {
-        lines.push(p + ' ' + section[p])
-      } else {
-        lines.push('  ' + p + ' ' + section[p])
+  compute(host) {
+    let obj = {}
+    let setProperty = (name, value) => {
+      if (name === 'IdentityFile') {
+        let list = obj[name] || (obj[name] = [])
+        list.push(value)
+      }
+      else if (obj[name] === undefined) {
+        obj[name] = value
       }
     }
+
+    for (let i = 0; i < this.length; i++) {
+      let line = this[i]
+
+      if (line.type !== DIRECTIVE) {
+        continue
+      }
+      else if (line.param === 'Host') {
+        if (glob(line.value, host)) {
+          setProperty(line.param, line.value)
+
+          line.config
+            .filter(line => line.type === DIRECTIVE)
+            .forEach(line => setProperty(line.param, line.value))
+        }
+      }
+      else if (line.param === 'Match') {
+        // TODO
+      }
+      else {
+        setProperty(line.param, line.value)
+      }
+    }
+
+    return obj
   }
 
-  return lines.join('\n')
+
+  /**
+   * find section by Host or Match
+   */
+  find(opts) {
+    let result = this.constructor.find(this, opts)
+    return result ? result[0] : null
+  }
+
+
+  /**
+   * Remove section
+   */
+  remove(opts) {
+    let result = this.constructor.find(this, opts)
+
+    if (result) {
+      return this.splice(result[1], 1)
+    }
+  }
+
+
+  /**
+   * toString()
+   */
+  toString() {
+    return this.constructor.stringify(this)
+  }
+
+
+  static find(config, opts) {
+    if (!(opts && ('Host' in opts || 'Match' in opts))) {
+      throw new Error('')
+    }
+
+    for (let i = 0, len = config.length; i < len; i++) {
+      let line = config[i]
+
+      if (line.type === DIRECTIVE &&
+          RE_SECTION_DIRECTIVE.test(line.param) &&
+          line.param in opts &&
+          opts[line.param] === line.value) {
+        return [line, i]
+      }
+    }
+
+    return null
+  }
+
+
+  /**
+   * Stringify structured object into ssh config text
+   */
+  static stringify(config) {
+    let str = ''
+    let format = line => {
+      str += line.before
+
+      if (line.type === COMMENT) {
+        str += line.content
+      }
+      else if (line.type === DIRECTIVE) {
+        str += [line.param, line.separator, line.value].join('')
+      }
+
+      str += line.after
+
+      if (line.config) {
+        line.config.forEach(format)
+      }
+    }
+
+    config.forEach(format)
+
+    return str
+  }
+
+
+  static get DIRECTIVE() {
+    return DIRECTIVE
+  }
+
+
+  static get COMMENT() {
+    return COMMENT
+  }
+
+
+  /**
+   * Parse ssh config text into structured object.
+   */
+  static parse(str) {
+    let i = 0
+    let chr = next()
+    let config = new SSHConfig()
+    let configWas = config
+
+    function next() {
+      return str[i++]
+    }
+
+    function space() {
+      let spaces = ''
+
+      while (RE_SPACE.test(chr)) {
+        spaces += chr
+        chr = next()
+      }
+
+      return spaces
+    }
+
+    function option() {
+      let opt = ''
+
+      while (chr && chr !== ' ' && chr !== '=') {
+        opt += chr
+        chr = next()
+      }
+
+      return opt
+    }
+
+    function separator() {
+      let sep = space()
+
+      if (chr === '=') {
+        sep += chr
+        chr = next()
+      }
+
+      return sep + space()
+    }
+
+    function value() {
+      let val = ''
+
+      while (chr && !RE_LINE_BREAK.test(chr)) {
+        val += chr
+        chr = next()
+      }
+
+      return val
+    }
+
+    function comment() {
+      let type = COMMENT
+      let content = ''
+
+      while (chr && !RE_LINE_BREAK.test(chr)) {
+        content += chr
+        chr = next()
+      }
+
+      return { type, content }
+    }
+
+    function directive() {
+      let type = DIRECTIVE
+
+      return {
+        type,
+        param: option(),
+        separator: separator(),
+        value: value()
+      }
+    }
+
+    function line() {
+      let before = space()
+      let node = chr === '#' ? comment() : directive()
+      let after = space()
+
+      node.before = before
+      node.after = after
+
+      return node
+    }
+
+
+    while (chr) {
+      let node = line()
+
+      if (node.type === DIRECTIVE && RE_SECTION_DIRECTIVE.test(node.param)) {
+        config = configWas
+        config.push(node)
+        config = node.config = new SSHConfig()
+      }
+      else {
+        config.push(node)
+      }
+    }
+
+    return configWas
+  }
 }
 
 
-/*
- * export poor man's glob for unit tests. This is private.
- */
-exports.glob = glob
-
+module.exports = SSHConfig

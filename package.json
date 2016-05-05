@@ -1,7 +1,7 @@
 {
   "name": "ssh-config",
   "description": "SSH config parser and stringifier",
-  "version": "0.2.1",
+  "version": "1.0.0-alpha",
   "author": "dotnil <jakeplus@gmail.com>",
   "repository": {
     "type": "git",
@@ -16,6 +16,9 @@
   "scripts": {
     "test": "mocha test/**/*.js",
     "cover": "istanbul cover _mocha -- test/test.*.js -R spec"
+  },
+  "engine": {
+    "node": ">= 4.0.0"
   },
   "license": "MIT"
 }

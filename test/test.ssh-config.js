@@ -1,102 +1,179 @@
 'use strict'
 
-var expect = require('expect.js')
-var fs = require('fs')
-var path = require('path')
-var heredoc = require('heredoc').strip
+let expect = require('expect.js')
+let fs = require('fs')
+let path = require('path')
+let heredoc = require('heredoc').strip
 
-var sshConfig = require('..')
+let sshConfig = require('..')
 
+// Node 4 hasn't got --harmony_destructuring turned on by default
+// let { DIRECTIVE, COMMENT } = sshConfig
+let DIRECTIVE = sshConfig.DIRECTIVE
+let COMMENT = sshConfig.COMMENT
 
 function readFile(fpath) {
   return fs.readFileSync(path.join(__dirname, fpath), 'utf-8')
     .replace(/\r\n/g, '\n')
 }
 
-describe('.parse', function() {
-  var fixture = readFile('fixture/config')
-  var config = sshConfig.parse(fixture)
 
-  it('.parse ssh config text into object', function() {
-    expect(config.ControlMaster).to.equal('auto')
-    expect(config.length).to.equal(4)
+describe('sshConfig', function() {
+  it('.parse simple config', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
 
-    expect(config[0]).to.eql({
-      Host: 'tahoe1',
-      HostName: 'tahoe1.com',
-      Compression: 'yes'
+    expect(config[0].param).to.equal('ControlMaster')
+    expect(config[0].value).to.equal('auto')
+    expect(config.length).to.equal(7)
+
+    expect(config.find({ Host: 'tahoe1' })).to.eql({
+      type: DIRECTIVE,
+      before: '',
+      after: '\n  ',
+      param: 'Host',
+      separator: ' ',
+      value: 'tahoe1',
+      config: [{
+        type: DIRECTIVE,
+        before: '',
+        after: '\n  ',
+        param: 'HostName',
+        separator: ' ',
+        value: 'tahoe1.com',
+      }, {
+        type: DIRECTIVE,
+        before: '',
+        after: '\n\n',
+        param: 'Compression',
+        separator: ' ',
+        value: 'yes'
+      }]
     })
   })
 
-  it('.parse parameters with their names and values separated by =', function() {
-    var config2 = sshConfig.parse(heredoc(function() {/*
+
+  it('.parse config with parameters and values separated by =', function() {
+    let config2 = sshConfig.parse(heredoc(function() {/*
       Host=tahoe4
         HostName=tahoe4.com
         User=keanu
     */}))
 
-    expect(config2).to.eql({
-      '0': {
-        Host: 'tahoe4',
-        HostName: 'tahoe4.com',
-        User: 'keanu'
-      }
+    expect(config2[0]).to.eql({
+      type: DIRECTIVE,
+      before: '',
+      after: '\n  ',
+      param: 'Host',
+      separator: '=',
+      value: 'tahoe4',
+      config: [{
+        type: DIRECTIVE,
+        before: '',
+        after: '\n  ',
+        param: 'HostName',
+        separator: '=',
+        value: 'tahoe4.com'
+      },{
+        type: DIRECTIVE,
+        before: '',
+        after: '\n',
+        param: 'User',
+        separator: '=',
+        value: 'keanu'
+      }]
     })
   })
-})
 
 
-describe('.stringify', function() {
-  var fixture = readFile('fixture/config')
-  var config = sshConfig.parse(fixture)
+  it('.parse comments', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      # I'd like to travel to lake tahoe.
+      Host tahoe1
+        HostName tahoe1.com
+
+      # or whatever place it is.
+      # I just need another vocation.
+      Host *
+        IdentityFile ~/.ssh/ids/whosyourdaddy
+    */}))
+
+    expect(config[0].type).to.equal(COMMENT)
+    expect(config[0].content).to.equal("# I'd like to travel to lake tahoe.")
+
+    // The comments goes with sections. So the structure is not the way it seems.
+    expect(config[1].config[1].type).to.equal(COMMENT)
+    expect(config[1].config[1].content).to.equal('# or whatever place it is.')
+  })
+
+
+  it('.parse multiple IdentityFile', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      # Fallback Identify Files
+      IdentityFile ~/.ssh/ids/%h/%r/id_rsa
+      IdentityFile ~/.ssh/ids/%h/id_rsa
+      IdentityFile ~/.ssh/id_rsa
+    */}))
+
+    expect(config[1].param).to.equal('IdentityFile')
+    expect(config[1].value).to.equal('~/.ssh/ids/%h/%r/id_rsa')
+
+    expect(config[2].param).to.equal('IdentityFile')
+    expect(config[2].value).to.equal('~/.ssh/ids/%h/id_rsa')
+
+    expect(config[3].param).to.equal('IdentityFile')
+    expect(config[3].value).to.equal('~/.ssh/id_rsa')
+  })
+
 
   it('.stringify the parsed object back to string', function() {
+    let fixture = readFile('fixture/config')
+    let config = sshConfig.parse(fixture)
     expect(fixture).to.contain(sshConfig.stringify(config))
   })
 
-  it('.stringify sections without leading blank line', function() {
-    var config = {
-      '0': {
-        Host: 'tahoe4',
-        HostName: 'tahoe4.com',
-        User: 'keanu'
-      }
-    }
-    Object.defineProperty(config, 'length', {
-      value: 1,
-      enumerable: false
-    })
+
+  it('.stringify config with white spaces and comments retained', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      # Lake tahoe
+      Host tahoe4
+
+        HostName tahoe4.com
+        # Breeze from the hills
+        User keanu
+    */}))
 
     expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
+      # Lake tahoe
       Host tahoe4
+
         HostName tahoe4.com
+        # Breeze from the hills
         User keanu
-    */}).trim())
+    */}))
   })
-})
 
 
-describe('.query', function() {
-  var config = sshConfig.parse(readFile('fixture/config'))
-
-  it('.query ssh config by host', function() {
-    var opts = config.query('tahoe2')
+  it('.compute by Host', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
+    let opts = config.compute('tahoe2')
 
     expect(opts.User).to.equal('nil')
-    expect(opts.IdentityFile).to.equal('~/.ssh/id_rsa')
+    expect(opts.IdentityFile).to.eql(['~/.ssh/id_rsa'])
 
     // the first obtained parameter value will be used. So there's no way to
     // override parameter values.
     expect(opts.ServerAliveInterval).to.eql(80)
 
-    // the query result is flat on purpose.
-    expect(config.query('tahoe1')).to.eql({
+    // the computed result is flat on purpose.
+    expect(config.compute('tahoe1')).to.eql({
       Compression: 'yes',
       ControlMaster: 'auto',
       ControlPath: '~/.ssh/master-%r@%h:%p',
       Host: 'tahoe1',
       HostName: 'tahoe1.com',
-      IdentityFile: '~/.ssh/id_rsa',
+      IdentityFile: [
+        '~/.ssh/id_rsa'
+      ],
       ProxyCommand: 'ssh -q gateway -W %h:%p',
       ServerAliveInterval: '80',
       User: 'nil',
@@ -104,122 +181,85 @@ describe('.query', function() {
     })
   })
 
-  it('.query ssh config that uses Match', function() {
-    var config2 = sshConfig.parse(heredoc(function() {/*
-      Match host tahoe4
-        HostName tahoe4.com
-        User keanu
-    */}))
 
-    // not implemented yet.
-    expect(config2.query('tahoe4')).to.eql({})
-  })
+  it('.compute by Host with globbing', function() {
+    let config2 = sshConfig.parse(readFile('fixture/config2'))
 
-  it('.query the whole host string', function() {
-    var config2 = sshConfig.parse(readFile('fixture/config2'))
-
-    expect(config2.query('example1')).to.eql({
+    expect(config2.compute('example1')).to.eql({
       Host: 'example1',
       HostName: 'example1.com',
       User: 'simon',
       Port: '1000',
-      IdentityFile: '/path/to/key'
+      IdentityFile: [
+        '/path/to/key'
+      ]
     })
   })
-})
 
 
-describe('.find', function() {
-  var config = sshConfig.parse(readFile('fixture/config'))
-
-  it('cannot find nothing', function() {
+  it('.find with nothing shall yield error', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
     expect(function() { config.find() }).to.throwException()
     expect(function() { config.find({}) }).to.throwException()
   })
 
-  it('.find Host section', function() {
+
+  it('.find nothing shall return null', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
+    expect(config.find({ Host: 'not.exist' })).to.be(null)
+  })
+
+
+  it('.find by Host', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
+
     expect(config.find({ Host: 'tahoe1' })).to.eql({
-      Host: 'tahoe1',
-      HostName: 'tahoe1.com',
-      Compression: 'yes'
+      type: DIRECTIVE,
+      before: '',
+      after: '\n  ',
+      param: 'Host',
+      separator: ' ',
+      value: 'tahoe1',
+      config: [{
+        type: DIRECTIVE,
+        before: '',
+        after: '\n  ',
+        param: 'HostName',
+        separator: ' ',
+        value: 'tahoe1.com'
+      }, {
+        type: DIRECTIVE,
+        before: '',
+        after: '\n\n',
+        param: 'Compression',
+        separator: ' ',
+        value: 'yes'
+      }]
     })
 
     expect(config.find({ Host: '*' })).to.eql({
-      Host: '*',
-      IdentityFile: '~/.ssh/id_rsa'
+      type: DIRECTIVE,
+      before: '',
+      after: '\n  ',
+      param: 'Host',
+      separator: ' ',
+      value: '*',
+      config: [{
+        type: DIRECTIVE,
+        before: '',
+        after: '\n\n',
+        param: 'IdentityFile',
+        separator: ' ',
+        value: '~/.ssh/id_rsa'
+      }]
     })
   })
 
-  it('.find Match section', function() {
-    // Match related features are not ready yet.
-    expect(config.find({ Match: 'host tahoe1' })).to.be(null)
-  })
-})
 
+  it('.remove by Host', function() {
+    let config = sshConfig.parse(readFile('fixture/config'))
+    let length = config.length
 
-describe('.append', function() {
-  var config = sshConfig.parse(readFile('fixture/config'))
-
-  it('cannot .append invalid section', function() {
-    expect(function() { config.append() }).to.throwException()
-    expect(function() { config.append({}) }).to.throwException()
-    expect(function() {
-      config.append({
-        HostName: 'tahoe5.com',
-        User: 'keanu'
-      })
-    })
-      .to.throwException()
-  })
-
-  it('.append Host section', function() {
-    // check duplications before .append
-    expect(function() {
-      config.append({
-        Host: 'tahoe1',
-        HostName: 'tahoe1.com'
-      })
-    })
-      .to.throwException(/duplicate/i)
-
-    config.append({
-      Host: 'tahoe3',
-      HostName: 'tahoe3.com',
-      User: 'keanu'
-    })
-
-    expect(config.find({ Host: 'tahoe3' })).to.eql({
-      Host: 'tahoe3',
-      HostName: 'tahoe3.com',
-      User: 'keanu'
-    })
-  })
-
-  it('.append Match section', function() {
-    config.append({
-      Match: 'host tahoe4',
-      HostName: 'tahoe4.com'
-    })
-
-    // Match parameter is not fully implemented yet.
-    expect(config.find({ Match: 'host tahoe4'})).to.eql({
-      Match: 'host tahoe4',
-      HostName: 'tahoe4.com'
-    })
-
-    expect(function() {
-      config.append({ Match: 'host tahoe4'})
-    })
-      .to.throwException(/duplicate/i)
-  })
-})
-
-
-describe('.remove', function() {
-  var config = sshConfig.parse(readFile('fixture/config'))
-
-  it('.remove section', function() {
-    var length = config.length
     config.remove({ Host: 'no.such.host' })
     expect(config.length).to.equal(length)
 

@@ -14,6 +14,7 @@ var expect = require('expect.js')
 
 // parse
 var config = sshConfig.parse(heredoc(function() {/*
+  # Sample config
   ControlMaster auto
   ControlPath ~/.ssh/master-%r@%h:%p
   IdentityFile ~/.ssh/id_rsa
@@ -31,62 +32,146 @@ var config = sshConfig.parse(heredoc(function() {/*
     ForwardAgent true
 */}))
 
-expect(config).to.eql({
-  '0':
-   { Host: 'tahoe1',
-     HostName: 'tahoe1.com' },
-  '1':
-   { Host: 'tahoe2',
-     HostName: 'tahoe2.com' },
-  '2':
-   { Host: '*',
-     User: 'nil',
-     ProxyCommand: 'ssh -q gateway -W %h:%p',
-     ForwardAgent: 'true' },
-  ControlMaster: 'auto',
-  ControlPath: '~/.ssh/master-%r@%h:%p',
-  IdentityFile: '~/.ssh/id_rsa',
-  ServerAliveInterval: '80'
+
+/*
+ * config will be something like:
+ *
+ *   [
+ *     {
+ *       "param": "ControlMaster",
+ *       "value": "auto"
+ *     },
+ *     {
+ *       "param": "ControlPath",
+ *       "value": "~/.ssh/master-%r@%h:%p"
+ *     },
+ *     {
+ *       "param": "IdentityFile",
+ *       "value": "~/.ssh/id_rsa"
+ *     },
+ *     {
+ *       "param": "ServerAliveInterval",
+ *       "value": "80"
+ *     },
+ *     {
+ *       "param": "Host",
+ *       "value": "tahoe1",
+ *       "config": [
+ *         {
+ *           "param": "HostName",
+ *           "value": "tahoe1.com"
+ *         }
+ *       ]
+ *     },
+ *     {
+ *       "param": "Host",
+ *       "value": "tahoe2",
+ *       "config": [
+ *         {
+ *           "param": "HostName",
+ *           "value": "tahoe2.com"
+ *         }
+ *       ]
+ *     },
+ *     {
+ *       "param": "Host",
+ *       "value": "*",
+ *       "config": [
+ *         {
+ *           "param": "User",
+ *           "value": "nil"
+ *         },
+ *         {
+ *           "param": "ProxyCommand",
+ *           "value": "ssh -q gateway -W %h:%p"
+ *         },
+ *         {
+ *           "param": "ForwardAgent",
+ *           "value": "true"
+ *         }
+ *       ]
+ *     }
+ *   ]
+ */
+
+
+// Change the HostName in the Host tahoe2 section
+let section = sshConfig.find({ Host: 'tahoe2' })
+
+section.config.some(line => {
+  if (line.param === 'HostName') {
+    line.value = 'tahoe2.com.cn'
+    return true
+  }
 })
 
-// stringify
+
+// stringify with the original format and comments preserved.
 console.log(sshConfig.stringify(config))
 ```
 
 
 ### Iterating Sections
 
-There's a hidden `config.length` property that can be used to iterate over the
-parsed sections.
+Take the config above as an example, to iterator over sections, a simple for
+loop will suffice.
 
 ```js
-for (var i = 0, len = config.length; i < len; i++) {
-  var section = config[i]
-  console.log(section)
+for (let i = 0; i < config.length; i++) {
+  let line = config[i]
+
+  // only section have sub config
+  if (line.config) {}
+
+  // or to make it explicit, check the parameter name and see if it's Host or Match
+  if (line.param === 'Host' || line.param === 'Match') {}
 }
 ```
 
-If the wild parameters is the ones you concern about:
+You can do it in ES2015 fashion too:
 
 ```js
-for (var p in config) {
-  if (+p < config.length) continue
-  console.log(p, config[p])
+// all the sections
+config.filter(line => !!line.config)
+```
+
+A section is an object that looks like below:
+
+```js
+{
+  "param": "Host",
+  "value": "*",
+  "config": [
+    {
+      "param": "User",
+      "value": "nil"
+    },
+    {
+      "param": "ProxyCommand",
+      "value": "ssh -q gateway -W %h:%p"
+    },
+    {
+      "param": "ForwardAgent",
+      "value": "true"
+    }
+  ]
 }
 ```
 
 
-### `.query` Parameters by Host
+### `.compute` Parameters by Host
 
 But iterating over sections and wild parameters to find the parameters you need
-is boring and error prone. You can use `config.query` method to query parameters
-by Host.
+is boring and less efficient. You can use `config.compute` method to compute
+apllied parameters of certain host.
 
 ```js
-expect(config.query('tahoe2')).to.eql({
+expect(config.compute('tahoe2')).to.eql({
   ControlMaster: 'auto',
   ControlPath: '~/.ssh/master-%r@%h:%p',
-  IdentityFile: '~/.ssh/id_rsa',
+  IdentityFile: [
+    '~/.ssh/id_rsa'
+  ],
   ServerAliveInterval: '80',
   Host: 'tahoe2',
   HostName: 'tahoe2.com',
@@ -100,27 +185,24 @@ expect(config.query('tahoe2')).to.eql({
 parameter value will be used. So we cannot override existing parameters. It is
 suggested that the general settings shall be at the end of your config file.
 
-Both `config.length` and `config.query` won't appear when you iterate over
-config object.
+The `IdentityFile` parameter always contain an array to make possible multiple
+`IdentityFile` settings to be able to coexist.
 
 
-### `.find` sections by Host or other criteria
+### `.find` sections by Host or Match
 
 To ditch boilerplate codes like the for loop shown earlier, we can use the
 `.find(opts)` available in the parsed config object.
 
 ```js
-var config = sshConfig.parse(/* ssh config text */)
-
 config.find({ Host: 'example1' })
-config.find({ HostName: 'example1.com' })
-config.find({ User: 'keanu' })
-// you've got the idea.
 ```
 
-**NOTICE** Like the way we handle parameter values, the first section that
-matches all the criteria passed in will be returned. `.find` won't bother to
-find them all.
+Or you can just brew it yourself:
+
+```js
+config.filter(line => line.param === 'Host' && line.value === 'example1').shift()
+```
 
 
 ### `.remove` sections by Host or other criteria
@@ -138,42 +220,47 @@ config.remove(section)
 config.remove({ Host: 'example1' })
 ```
 
-**NOTICE** Unlike `.find`, `.remove` finds and removes ALL the macthed sections.
-So please be specific about the criteria you provide.
-
-If the provided opts were something like `{ User: 'keanu' }`, all sections that
-has `User` set to `keanu` will be removed.
-
 
 ### `.append` sections
 
-
-To append new sections, use `.append(section)` method.
+Starting from version 1.0.0, there's no more `.append` method. Since the config
+is now a sub class if Array, you can append with methods like `.push` or `.concat`.
 
 ```js
-var config = sshConfig.parse(/* ssh config text */)
+let newSection = sshConfig.parse(`
+Host *
+  User keanu
+`)
 
-config.append({
-  Host: 'example2',
-  HostName: 'example2.com'
-})
+config = config.concat(newSection)
+config.find({ Host: '*' })
 
-// not you can query settings about example2
-config.query('example2')
+/*
+ *
+{
+  param: 'Host',
+  value: '*',
+  config: [
+    {
+      param: 'User',
+      value: 'keanu'
+    }
+  ]
+}
+ */
+
 ```
-
-**NOTICE** only `Host` and `Match` can start new sections. So please provide
-any one of them in your section that needs to be appended. Besides, to make the
-config object legitimate, you can not append dupilcated `Host`s or `Match`es.
 
 
 ## References
 
 - [ssh_config(5)][ssh_config]
+- [ssh_config(5)][ssh_config_die]
 - [ssh_config(5) OpenBSD][ssh_config_openbsd]
 - http://en.wikibooks.org/wiki/OpenSSH/Client_Configuration_Files#.7E.2F.ssh.2Fconfig
 - http://stackoverflow.com/questions/10197559/ssh-configuration-override-the-default-username
 
 
-[ssh_config]: http://linux.die.net/man/5/ssh_config
+[ssh_config]: https://www.freebsd.org/cgi/man.cgi?query=ssh_config&sektion=5
+[ssh_config_die]: http://linux.die.net/man/5/ssh_config
 [ssh_config_openbsd]: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man5/ssh_config.5?query=ssh_config&arch=i386
