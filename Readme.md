@@ -36,62 +36,33 @@ var config = sshConfig.parse(heredoc(function() {/*
 /*
  * config will be something like:
  *
- *   [
- *     {
- *       "param": "ControlMaster",
- *       "value": "auto"
- *     },
- *     {
- *       "param": "ControlPath",
- *       "value": "~/.ssh/master-%r@%h:%p"
- *     },
- *     {
- *       "param": "IdentityFile",
- *       "value": "~/.ssh/id_rsa"
- *     },
- *     {
- *       "param": "ServerAliveInterval",
- *       "value": "80"
- *     },
- *     {
- *       "param": "Host",
+ *   [ { "param": "ControlMaster",
+ *       "value": "auto" },
+ *     { "param": "ControlPath",
+ *       "value": "~/.ssh/master-%r@%h:%p" },
+ *     { "param": "IdentityFile",
+ *       "value": "~/.ssh/id_rsa" },
+ *     { "param": "ServerAliveInterval",
+ *       "value": "80" },
+ *     { "param": "Host",
  *       "value": "tahoe1",
- *       "config": [
- *         {
- *           "param": "HostName",
- *           "value": "tahoe1.com"
- *         }
- *       ]
- *     },
- *     {
- *       "param": "Host",
+ *       "config":
+ *         [ { "param": "HostName",
+ *             "value": "tahoe1.com" } ] },
+ *     { "param": "Host",
  *       "value": "tahoe2",
- *       "config": [
- *         {
- *           "param": "HostName",
- *           "value": "tahoe2.com"
- *         }
- *       ]
- *     },
- *     {
- *       "param": "Host",
+ *       "config":
+ *         [ { "param": "HostName",
+ *             "value": "tahoe2.com" } ] },
+ *     { "param": "Host",
  *       "value": "*",
- *       "config": [
- *         {
- *           "param": "User",
- *           "value": "nil"
- *         },
- *         {
- *           "param": "ProxyCommand",
- *           "value": "ssh -q gateway -W %h:%p"
- *         },
- *         {
- *           "param": "ForwardAgent",
- *           "value": "true"
- *         }
- *       ]
- *     }
- *   ]
+ *       "config":
+ *         [ { "param": "User",
+ *             "value": "nil" },
+ *           { "param": "ProxyCommand",
+ *             "value": "ssh -q gateway -W %h:%p" },
+ *           { "param": "ForwardAgent",
+ *             "value": "true" } ] } ]
  */
 
 
