@@ -86,7 +86,7 @@ class SSHConfig extends Array {
 
   static find(config, opts) {
     if (!(opts && ('Host' in opts || 'Match' in opts))) {
-      throw new Error('')
+      throw new Error('Can only find by Host or Match')
     }
 
     for (let i = 0, len = config.length; i < len; i++) {

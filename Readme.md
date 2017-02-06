@@ -67,7 +67,7 @@ var config = sshConfig.parse(heredoc(function() {/*
 
 
 // Change the HostName in the Host tahoe2 section
-let section = sshConfig.find({ Host: 'tahoe2' })
+let section = config.find({ Host: 'tahoe2' })
 
 section.config.some(line => {
   if (line.param === 'HostName') {
@@ -133,8 +133,8 @@ A section is an object that looks like below:
 ### `.compute` Parameters by Host
 
 But iterating over sections and wild parameters to find the parameters you need
-is boring and less efficient. You can use `config.compute` method to compute
-apllied parameters of certain host.
+is boring and inefficient. You can use `config.compute` method to compute
+applied parameters of certain host.
 
 ```js
 expect(config.compute('tahoe2')).to.eql({
@@ -161,6 +161,10 @@ The `IdentityFile` parameter always contain an array to make possible multiple
 
 
 ### `.find` sections by Host or Match
+
+**NOTICE**: This method is provided to find the corresponding section in the
+parsed config for config manipulation. It is NOT intended to compute config
+of certain Host. For latter case, use `.compute(host)` instead.
 
 To ditch boilerplate codes like the for loop shown earlier, we can use the
 `.find(opts)` available in the parsed config object.

@@ -204,7 +204,7 @@ describe('sshConfig', function() {
   })
 
 
-  it('.find nothing shall return null', function() {
+  it('.find shall return null if nothing were found', function() {
     let config = sshConfig.parse(readFile('fixture/config'))
     expect(config.find({ Host: 'not.exist' })).to.be(null)
   })
