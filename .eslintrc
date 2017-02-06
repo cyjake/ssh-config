@@ -1,7 +1,7 @@
 {
   "env": {
     "node": true,
-    "esnext": true
+    "es6": true
   },
   "rules": {
     "curly": [2, "multi-line"],

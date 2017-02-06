@@ -1,13 +1,13 @@
 'use strict'
 
-let glob = require('./lib/glob')
+const glob = require('./lib/glob')
 
-let RE_SPACE = /\s/
-let RE_LINE_BREAK = /\r|\n/
-let RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
+const RE_SPACE = /\s/
+const RE_LINE_BREAK = /\r|\n/
+const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 
-let DIRECTIVE = 1
-let COMMENT = 2
+const DIRECTIVE = 1
+const COMMENT = 2
 
 
 class SSHConfig extends Array {
@@ -196,7 +196,7 @@ class SSHConfig extends Array {
         chr = next()
       }
 
-      return val
+      return val.trim()
     }
 
     function comment() {
