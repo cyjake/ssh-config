@@ -1,4 +1,11 @@
 
+1.0.1 / 2017-02-06
+==================
+
+  * Fix: trim spaces at value beginning and endding
+  * Fix: make example east more compact
+
+
 1.0.0 / 2016-05-05
 ==================
 
