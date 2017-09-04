@@ -1,16 +1,13 @@
 'use strict'
 
-let expect = require('expect.js')
-let fs = require('fs')
-let path = require('path')
-let heredoc = require('heredoc').strip
+const expect = require('expect.js')
+const fs = require('fs')
+const path = require('path')
+const heredoc = require('heredoc').strip
 
-let sshConfig = require('..')
+const SSHConfig = require('..')
 
-// Node 4 hasn't got --harmony_destructuring turned on by default
-// let { DIRECTIVE, COMMENT } = sshConfig
-let DIRECTIVE = sshConfig.DIRECTIVE
-let COMMENT = sshConfig.COMMENT
+const { DIRECTIVE, COMMENT } = SSHConfig
 
 function readFile(fpath) {
   return fs.readFileSync(path.join(__dirname, fpath), 'utf-8')
@@ -18,9 +15,9 @@ function readFile(fpath) {
 }
 
 
-describe('sshConfig', function() {
+describe('SSHConfig', function() {
   it('.parse simple config', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
 
     expect(config[0].param).to.equal('ControlMaster')
     expect(config[0].value).to.equal('auto')
@@ -53,7 +50,7 @@ describe('sshConfig', function() {
 
 
   it('.parse config with parameters and values separated by =', function() {
-    let config2 = sshConfig.parse(heredoc(function() {/*
+    let config2 = SSHConfig.parse(heredoc(function() {/*
       Host=tahoe4
         HostName=tahoe4.com
         User=keanu
@@ -86,7 +83,7 @@ describe('sshConfig', function() {
 
 
   it('.parse comments', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       # I'd like to travel to lake tahoe.
       Host tahoe1
         HostName tahoe1.com
@@ -107,7 +104,7 @@ describe('sshConfig', function() {
 
 
   it('.parse multiple IdentityFile', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       # Fallback Identify Files
       IdentityFile ~/.ssh/ids/%h/%r/id_rsa
       IdentityFile ~/.ssh/ids/%h/id_rsa
@@ -127,13 +124,13 @@ describe('sshConfig', function() {
 
   it('.stringify the parsed object back to string', function() {
     let fixture = readFile('fixture/config')
-    let config = sshConfig.parse(fixture)
-    expect(fixture).to.contain(sshConfig.stringify(config))
+    let config = SSHConfig.parse(fixture)
+    expect(fixture).to.contain(SSHConfig.stringify(config))
   })
 
 
   it('.stringify config with white spaces and comments retained', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       # Lake tahoe
       Host tahoe4
 
@@ -142,7 +139,7 @@ describe('sshConfig', function() {
         User keanu
     */}))
 
-    expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
+    expect(SSHConfig.stringify(config)).to.equal(heredoc(function() {/*
       # Lake tahoe
       Host tahoe4
 
@@ -154,7 +151,7 @@ describe('sshConfig', function() {
 
 
   it('.compute by Host', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
     let opts = config.compute('tahoe2')
 
     expect(opts.User).to.equal('nil')
@@ -183,7 +180,7 @@ describe('sshConfig', function() {
 
 
   it('.compute by Host with globbing', function() {
-    let config2 = sshConfig.parse(readFile('fixture/config2'))
+    let config2 = SSHConfig.parse(readFile('fixture/config2'))
 
     expect(config2.compute('example1')).to.eql({
       Host: 'example1',
@@ -198,20 +195,20 @@ describe('sshConfig', function() {
 
 
   it('.find with nothing shall yield error', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
     expect(function() { config.find() }).to.throwException()
     expect(function() { config.find({}) }).to.throwException()
   })
 
 
   it('.find shall return null if nothing were found', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
     expect(config.find({ Host: 'not.exist' })).to.be(null)
   })
 
 
   it('.find by Host', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
 
     expect(config.find({ Host: 'tahoe1' })).to.eql({
       type: DIRECTIVE,
@@ -257,7 +254,7 @@ describe('sshConfig', function() {
 
 
   it('.remove by Host', function() {
-    let config = sshConfig.parse(readFile('fixture/config'))
+    let config = SSHConfig.parse(readFile('fixture/config'))
     let length = config.length
 
     config.remove({ Host: 'no.such.host' })
@@ -269,5 +266,19 @@ describe('sshConfig', function() {
 
     expect(function() { config.remove() }).to.throwException()
     expect(function() { config.remove({}) }).to.throwException()
+  })
+
+  it('.append new lines', function() {
+    const config = SSHConfig.parse(readFile('fixture/config2'))
+
+    config.append({
+      Host: 'example2.com',
+      User: 'pegg',
+      IdentityFile: '~/.ssh/id_rsa'
+    })
+
+    const opts = config.compute('example2.com')
+    expect(opts.User).to.eql('pegg')
+    expect(opts.IdentityFile).to.eql(['~/.ssh/id_rsa'])
   })
 })

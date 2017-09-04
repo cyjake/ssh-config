@@ -1,10 +1,10 @@
 'use strict'
 
-var heredoc = require('heredoc').strip
-var sshConfig = require('./index')
+const heredoc = require('heredoc').strip
+const SSHConfig = require('./index')
 
 
-var config = sshConfig.parse(heredoc(function() {/*
+const config = SSHConfig.parse(heredoc(function() {/*
   Host example
     HostName example.com
     User root
@@ -27,4 +27,4 @@ config.append({
 })
 
 
-console.log(sshConfig.stringify(config))
+console.log(SSHConfig.stringify(config))

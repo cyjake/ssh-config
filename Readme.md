@@ -8,146 +8,79 @@
 ## Usage
 
 ```js
-var sshConfig = require('ssh-config')
-var heredoc = require('heredoc')
-var expect = require('expect.js')
+const SSHConfig = require('ssh-config')
 
-// parse
-var config = sshConfig.parse(heredoc(function() {/*
-  # Sample config
-  ControlMaster auto
-  ControlPath ~/.ssh/master-%r@%h:%p
+const config = SSHConfig.parse(`
   IdentityFile ~/.ssh/id_rsa
-  ServerAliveInterval 80
 
-  Host tahoe1
-    HostName tahoe1.com
+  Host tahoe
+    HostName tahoe.com
 
-  Host tahoe2
-    HostName tahoe2.com
+  Host walden
+    HostName waldenlake.org
 
   Host *
-    User nil
-    ProxyCommand ssh -q gateway -W %h:%p
+    User keanu
     ForwardAgent true
-*/}))
+`)
 
+expect(config).to.sql(
+  [ { "param": "IdentityFile",
+      "value": "~/.ssh/id_rsa" },
+    { "param": "Host",
+      "value": "tahoe",
+      "config":
+        [ { "param": "HostName",
+            "value": "tahoe.com" } ] },
+    { "param": "Host",
+      "value": "walden",
+      "config":
+        [ { "param": "HostName",
+            "value": "waldenlake.org" } ] },
+    { "param": "Host",
+      "value": "*",
+      "config":
+        [ { "param": "User",
+            "value": "keanu" },
+          { "param": "ForwardAgent",
+            "value": "true" } ] } ]
+)
 
-/*
- * config will be something like:
- *
- *   [ { "param": "ControlMaster",
- *       "value": "auto" },
- *     { "param": "ControlPath",
- *       "value": "~/.ssh/master-%r@%h:%p" },
- *     { "param": "IdentityFile",
- *       "value": "~/.ssh/id_rsa" },
- *     { "param": "ServerAliveInterval",
- *       "value": "80" },
- *     { "param": "Host",
- *       "value": "tahoe1",
- *       "config":
- *         [ { "param": "HostName",
- *             "value": "tahoe1.com" } ] },
- *     { "param": "Host",
- *       "value": "tahoe2",
- *       "config":
- *         [ { "param": "HostName",
- *             "value": "tahoe2.com" } ] },
- *     { "param": "Host",
- *       "value": "*",
- *       "config":
- *         [ { "param": "User",
- *             "value": "nil" },
- *           { "param": "ProxyCommand",
- *             "value": "ssh -q gateway -W %h:%p" },
- *           { "param": "ForwardAgent",
- *             "value": "true" } ] } ]
- */
+// Change the HostName in the Host walden section
+const section = config.find({ Host: 'walden' })
 
-
-// Change the HostName in the Host tahoe2 section
-let section = config.find({ Host: 'tahoe2' })
-
-section.config.some(line => {
+for (const line of section.config) {
   if (line.param === 'HostName') {
-    line.value = 'tahoe2.com.cn'
-    return true
+    line.value = 'waldenlake.org'
+    break
   }
-})
+}
 
-
-// stringify with the original format and comments preserved.
-console.log(sshConfig.stringify(config))
+// The original whitespaces and comments are preserved.
+console.log(SSHConfig.stringify(config))
 ```
 
 
 ### Iterating Sections
 
-Take the config above as an example, to iterator over sections, a simple for
-loop will suffice.
+One needs to iterate over ssh configs mostly because of two reasons.
 
-```js
-for (let i = 0; i < config.length; i++) {
-  let line = config[i]
-
-  // only section have sub config
-  if (line.config) {}
-
-  // or to make it explicit, check the parameter name and see if it's Host or Match
-  if (line.param === 'Host' || line.param === 'Match') {}
-}
-```
-
-You can do it in ES2015 fashion too:
-
-```js
-// all the sections
-config.filter(line => !!line.config)
-```
-
-A section is an object that looks like below:
-
-```js
-{
-  "param": "Host",
-  "value": "*",
-  "config": [
-    {
-      "param": "User",
-      "value": "nil"
-    },
-    {
-      "param": "ProxyCommand",
-      "value": "ssh -q gateway -W %h:%p"
-    },
-    {
-      "param": "ForwardAgent",
-      "value": "true"
-    }
-  ]
-}
-```
+- to `.find` the corresponding section and modify it, or
+- to `.compute` the ssh config about certain `Host`.
 
 
 ### `.compute` Parameters by Host
 
-But iterating over sections and wild parameters to find the parameters you need
-is boring and inefficient. You can use `config.compute` method to compute
-applied parameters of certain host.
+You can use `config.compute` method to compute applied parameters of certain host.
 
 ```js
-expect(config.compute('tahoe2')).to.eql({
-  ControlMaster: 'auto',
-  ControlPath: '~/.ssh/master-%r@%h:%p',
+expect(config.compute('walden')).to.eql({
   IdentityFile: [
     '~/.ssh/id_rsa'
   ],
-  ServerAliveInterval: '80',
-  Host: 'tahoe2',
-  HostName: 'tahoe2.com',
+  Host: 'walden',
+  HostName: 'waldenlake.org',
   User: 'nil',
-  ProxyCommand: 'ssh -q gateway -W %h:%p',
   ForwardAgent: 'true'
 })
 ```
@@ -176,7 +109,7 @@ config.find({ Host: 'example1' })
 Or you can just brew it yourself:
 
 ```js
-config.filter(line => line.param === 'Host' && line.value === 'example1').shift()
+config.filter(line => line.param == 'Host' && line.value == 'example1')[0]
 ```
 
 
@@ -185,45 +118,47 @@ config.filter(line => line.param === 'Host' && line.value === 'example1').shift(
 To remove sections, we can pass the section to `.remove(opts)`.
 
 ```js
-var config = sshConfig.parse(/* ssh config text */)
-
-// find the section you want to remove, and remove it.
-var section = config.find({ Host: 'example1' })
-config.remove(section)
-
-// or you can put it in one statement
+const config = SSHConfig.parse(/* ssh config text */)
 config.remove({ Host: 'example1' })
 ```
 
 
 ### `.append` sections
 
-Starting from version 1.0.0, there's no more `.append` method. Since the config
-is now a sub class if Array, you can append with methods like `.push` or `.concat`.
+Since the parsed config is a sub class if Array, you can append new sections with methods like `.push` or `.concat`.
 
 ```js
-let newSection = sshConfig.parse(`
-Host *
-  User keanu
-`)
+config.push(SSHConfig.parse(`
+Host ness
+  HostName lochness.com
+  User dinosaur
+`))
 
-config = config.concat(newSection)
-config.find({ Host: '*' })
+expect(config.find({ Host: '*' })).to.eql(
+  { "param": "Host",
+    "value": "ness",
+    "config":
+     [ { "param": "HostName",
+         "value": "lochness.com" } ] }
+)
+```
 
-/*
- *
-{
-  param: 'Host',
-  value: '*',
-  config: [
-    {
-      param: 'User',
-      value: 'keanu'
-    }
-  ]
-}
- */
+If the section to append is vanilla JSON, `.append` is what you need.
 
+```js
+const config = new SSHConfig()
+
+config.append({
+  Host: 'ness',
+  HostName: 'lochness.com',
+  User: 'dinosaur'
+})
+
+SSHConfig.stringify(config)
+// =>
+// Host ness
+//   HostName lochness.com
+//   User dinosaur
 ```
 
 

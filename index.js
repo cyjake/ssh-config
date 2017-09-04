@@ -84,13 +84,43 @@ class SSHConfig extends Array {
   }
 
 
+  /**
+   * Append new section to existing ssh config.
+   */
+  append(opts) {
+    let config = this
+    let configWas = this
+
+    for (const param in opts) {
+      const line = {
+        type: DIRECTIVE,
+        param,
+        separator: ' ',
+        value: opts[param],
+        before: '',
+        after: '\n  '
+      }
+
+      if (RE_SECTION_DIRECTIVE.test(param)) {
+        config = configWas
+        config.push(line)
+        config = line.config = new SSHConfig()
+      } else {
+        config.push(line)
+      }
+    }
+
+    return configWas
+  }
+
+
   static find(config, opts) {
     if (!(opts && ('Host' in opts || 'Match' in opts))) {
       throw new Error('Can only find by Host or Match')
     }
 
-    for (let i = 0, len = config.length; i < len; i++) {
-      let line = config[i]
+    for (let i = 0; i < config.length; i++) {
+      const line = config[i]
 
       if (line.type === DIRECTIVE &&
           RE_SECTION_DIRECTIVE.test(line.param) &&
