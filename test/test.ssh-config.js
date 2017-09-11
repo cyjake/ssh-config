@@ -125,6 +125,20 @@ describe('sshConfig', function() {
   })
 
 
+  it('.parse IdentityFile with spaces', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      IdentityFile C:\Users\fname lname\.ssh\id_rsa
+      IdentityFile "C:\Users\fname lname\.ssh\id_rsa"
+    */}))
+
+    expect(config[0].param).to.equal('IdentityFile')
+    expect(config[0].value).to.equal('C:\\Users\\fname lname\\.ssh\\id_rsa')
+
+    expect(config[1].param).to.equal('IdentityFile')
+    expect(config[1].value).to.equal('C:\\Users\\fname lname\\.ssh\\id_rsa')
+  })
+
+
   it('.stringify the parsed object back to string', function() {
     let fixture = readFile('fixture/config')
     let config = sshConfig.parse(fixture)
@@ -149,6 +163,23 @@ describe('sshConfig', function() {
         HostName tahoe4.com
         # Breeze from the hills
         User keanu
+    */}))
+  })
+
+
+  it('.stringify entries with double quotes', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      Host example
+        HostName example.com
+        User dan
+        IdentityFile "/path to my/.ssh/id_rsa"
+    */}))
+
+    expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
+      Host example
+        HostName example.com
+        User dan
+        IdentityFile "/path to my/.ssh/id_rsa"
     */}))
   })
 
