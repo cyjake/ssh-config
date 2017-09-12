@@ -182,8 +182,7 @@ describe('sshConfig', function() {
       Host example
         HostName example.com
         User dan
-        IdentityFile /path to my/.ssh/id_rsa
-        IdentityFile "/path to my/.ssh/id_rsa2"
+        IdentityFile "/path to my/.ssh/id_rsa"
     */}))
 
     expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
@@ -191,7 +190,6 @@ describe('sshConfig', function() {
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
-        IdentityFile "/path to my/.ssh/id_rsa2"
     */}))
   })
 
