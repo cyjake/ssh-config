@@ -111,8 +111,8 @@ class SSHConfig extends Array {
   static stringify(config) {
     let str = ''
 
-    let formatValue = value => {
-      if (RE_SPACE.test(value)) {
+    let formatValue = (name, value) => {
+      if (name === 'IdentityFile' && RE_SPACE.test(value)) {
         value = '"' + value + '"'
       }
 
@@ -126,7 +126,7 @@ class SSHConfig extends Array {
         str += line.content
       }
       else if (line.type === DIRECTIVE) {
-        str += [line.param, line.separator, formatValue(line.value)].join('')
+        str += [line.param, line.separator, formatValue(line.param, line.value)].join('')
       }
 
       str += line.after

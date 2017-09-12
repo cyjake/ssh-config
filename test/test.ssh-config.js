@@ -167,12 +167,13 @@ describe('sshConfig', function() {
   })
 
 
-  it('.stringify entries with double quotes', function() {
+  it('.stringify IdentityFile entries with double quotes', function() {
     let config = sshConfig.parse(heredoc(function() {/*
       Host example
         HostName example.com
         User dan
-        IdentityFile "/path to my/.ssh/id_rsa"
+        IdentityFile /path to my/.ssh/id_rsa
+        IdentityFile "/path to my/.ssh/id_rsa2"
     */}))
 
     expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
@@ -180,6 +181,7 @@ describe('sshConfig', function() {
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
+        IdentityFile "/path to my/.ssh/id_rsa2"
     */}))
   })
 

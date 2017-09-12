@@ -16,4 +16,4 @@ Host *
 Host tahoe?
   User nil
   ForwardAgent true
-  ProxyCommand "ssh -q gateway -W %h:%p"
+  ProxyCommand ssh -q gateway -W %h:%p
