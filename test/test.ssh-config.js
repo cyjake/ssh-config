@@ -139,6 +139,16 @@ describe('sshConfig', function() {
   })
 
 
+  it('.parse Host with double quotes', function() {
+    let config = sshConfig.parse(heredoc(function() {/*
+      Host foo "!*.bar"
+    */}))
+
+    expect(config[0].param).to.equal('Host');
+    expect(config[0].value).to.equal('foo "!*.bar"')
+  })
+
+
   it('.stringify the parsed object back to string', function() {
     let fixture = readFile('fixture/config')
     let config = sshConfig.parse(fixture)
