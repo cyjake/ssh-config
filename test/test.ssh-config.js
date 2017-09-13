@@ -123,7 +123,7 @@ describe('SSHConfig', function() {
 
 
   it('.parse IdentityFile with spaces', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       IdentityFile C:\Users\fname lname\.ssh\id_rsa
       IdentityFile "C:\Users\fname lname\.ssh\id_rsa"
     */}))
@@ -137,7 +137,7 @@ describe('SSHConfig', function() {
 
 
   it('.parse Host with double quotes', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       Host foo "!*.bar"
     */}))
 
@@ -175,14 +175,14 @@ describe('SSHConfig', function() {
 
 
   it('.stringify IdentityFile entries with double quotes', function() {
-    let config = sshConfig.parse(heredoc(function() {/*
+    let config = SSHConfig.parse(heredoc(function() {/*
       Host example
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
     */}))
 
-    expect(sshConfig.stringify(config)).to.equal(heredoc(function() {/*
+    expect(SSHConfig.stringify(config)).to.equal(heredoc(function() {/*
       Host example
         HostName example.com
         User dan
