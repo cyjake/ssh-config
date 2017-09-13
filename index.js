@@ -5,6 +5,7 @@ const glob = require('./lib/glob')
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
+const RE_QUOTED = /^(")(.*)\1$/
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -139,6 +140,7 @@ class SSHConfig extends Array {
    */
   static stringify(config) {
     let str = ''
+
     let format = line => {
       str += line.before
 
@@ -146,7 +148,9 @@ class SSHConfig extends Array {
         str += line.content
       }
       else if (line.type === DIRECTIVE) {
-        str += [line.param, line.separator, line.value].join('')
+        str += line.quoted || (line.param == 'IdentityFile' && RE_SPACE.test(line.value))
+          ? `${line.param}${line.separator}"${line.value}"`
+          : `${line.param}${line.separator}${line.value}`
       }
 
       str += line.after
@@ -259,6 +263,11 @@ class SSHConfig extends Array {
 
       node.before = before
       node.after = after
+
+      if (RE_QUOTED.test(node.value)) {
+        node.value = node.value.replace(RE_QUOTED, '$2')
+        node.quoted = true
+      }
 
       return node
     }
