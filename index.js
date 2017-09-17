@@ -91,6 +91,7 @@ class SSHConfig extends Array {
   append(opts) {
     let config = this
     let configWas = this
+    const lastParam = opts[Object.keys(opts)[Object.keys(opts).length - 1]]
 
     for (const param in opts) {
       const line = {
@@ -99,7 +100,7 @@ class SSHConfig extends Array {
         separator: ' ',
         value: opts[param],
         before: '',
-        after: '\n  '
+        after: lastParam === opts[param] ? '\n\n': '\n  '
       }
 
       if (RE_SECTION_DIRECTIVE.test(param)) {
