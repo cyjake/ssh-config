@@ -1,3 +1,9 @@
+1.1.2 / 2017-09-22
+==================
+
+ * Fix: nagate patterns shall be matched first and fail early
+
+
 1.1.1 / 2017-09-13
 ==================
 
@@ -8,7 +14,7 @@
 1.1.0 / 2017-09-07
 ==================
 
- * New: config.append({ Host: '*' })
+ * New: `config.append({ Host: '*' })`
 
 Allow appending sections via `config.append({ ... })` method. Closes #12.
 

@@ -1,8 +1,8 @@
 'use strict'
 
-var expect = require('expect.js')
+const expect = require('expect.js')
 
-var glob = require('../lib/glob')
+const glob = require('../lib/glob')
 
 
 describe('glob', function() {
@@ -28,8 +28,9 @@ describe('glob', function() {
   })
 
   it('glob negated pattern list', function() {
-    expect(glob('!laputa,castle', 'laputa')).to.be(false)
-    expect(glob('!castle,in,the,sky', 'laputa')).to.be(true)
+    expect(glob('!*.dialup.example.com,*.example.com', 'www.example.com')).to.be(true)
+    expect(glob('!*.dialup.example.com,*.example.com', 'www.dialup.example.com')).to.be(false)
+    expect(glob('*.example.com,!*.dialup.example.com', 'www.dialup.example.com')).to.be(false)
   })
 
   it('glob the whole string', function() {
