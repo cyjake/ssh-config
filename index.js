@@ -91,7 +91,6 @@ class SSHConfig extends Array {
   append(opts) {
     let config = this
     let configWas = this
-    const lastParam = opts[Object.keys(opts)[Object.keys(opts).length - 1]]
 
     for (const param in opts) {
       const line = {
@@ -100,7 +99,7 @@ class SSHConfig extends Array {
         separator: ' ',
         value: opts[param],
         before: '',
-        after: lastParam === opts[param] ? '\n\n': '\n  '
+        after: '\n'
       }
 
       if (RE_SECTION_DIRECTIVE.test(param)) {
@@ -108,9 +107,12 @@ class SSHConfig extends Array {
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
+        line.before = '\t'
         config.push(line)
       }
     }
+
+    config[config.length - 1].after += '\n'
 
     return configWas
   }
