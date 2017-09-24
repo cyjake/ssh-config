@@ -107,7 +107,7 @@ class SSHConfig extends Array {
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
-        line.before = '\t'
+        line.before = '  '
         config.push(line)
       }
     }

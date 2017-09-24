@@ -330,14 +330,14 @@ describe('SSHConfig', function() {
       value: 'example2.com',
       config: [{
         type: DIRECTIVE,
-        before: '\t',
+        before: '  ',
         after: '\n',
         param: 'User',
         separator: ' ',
         value: 'pegg'
       },{
         type: DIRECTIVE,
-        before: '\t',
+        before: '  ',
         after: '\n\n',
         param: 'IdentityFile',
         separator: ' ',
