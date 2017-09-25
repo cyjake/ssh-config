@@ -1,3 +1,9 @@
+1.1.3 / 2017-09-25
+==================
+
+ * Fix: appended config shall comply with existing style, otherwhise default to two spaces. Also an extra linebreak is added after the last line.
+
+
 1.1.2 / 2017-09-22
 ==================
 

@@ -91,6 +91,19 @@ class SSHConfig extends Array {
   append(opts) {
     let config = this
     let configWas = this
+    let indent = '  '
+
+    outer:
+    for (const line of this) {
+      if (RE_SECTION_DIRECTIVE.test(line.param)) {
+        for (const subline of line.config) {
+          if (subline.before) {
+            indent = subline.before
+            break outer
+          }
+        }
+      }
+    }
 
     for (const param in opts) {
       const line = {
@@ -107,7 +120,7 @@ class SSHConfig extends Array {
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
-        line.before = '  '
+        line.before = indent
         config.push(line)
       }
     }
@@ -203,6 +216,17 @@ class SSHConfig extends Array {
       return spaces
     }
 
+    function linebreak() {
+      let breaks = ''
+
+      while (RE_LINE_BREAK.test(chr)) {
+        breaks += chr
+        chr = next()
+      }
+
+      return breaks
+    }
+
     function option() {
       let opt = ''
 
@@ -262,7 +286,7 @@ class SSHConfig extends Array {
     function line() {
       let before = space()
       let node = chr === '#' ? comment() : directive()
-      let after = space()
+      let after = linebreak()
 
       node.before = before
       node.after = after

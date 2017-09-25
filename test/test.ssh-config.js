@@ -26,20 +26,20 @@ describe('SSHConfig', function() {
     expect(config.find({ Host: 'tahoe1' })).to.eql({
       type: DIRECTIVE,
       before: '',
-      after: '\n  ',
+      after: '\n',
       param: 'Host',
       separator: ' ',
       value: 'tahoe1',
       config: [{
         type: DIRECTIVE,
-        before: '',
-        after: '\n  ',
+        before: '  ',
+        after: '\n',
         param: 'HostName',
         separator: ' ',
         value: 'tahoe1.com',
       }, {
         type: DIRECTIVE,
-        before: '',
+        before: '  ',
         after: '\n\n',
         param: 'Compression',
         separator: ' ',
@@ -59,20 +59,20 @@ describe('SSHConfig', function() {
     expect(config2[0]).to.eql({
       type: DIRECTIVE,
       before: '',
-      after: '\n  ',
+      after: '\n',
       param: 'Host',
       separator: '=',
       value: 'tahoe4',
       config: [{
         type: DIRECTIVE,
-        before: '',
-        after: '\n  ',
+        before: '  ',
+        after: '\n',
         param: 'HostName',
         separator: '=',
         value: 'tahoe4.com'
       },{
         type: DIRECTIVE,
-        before: '',
+        before: '  ',
         after: '\n',
         param: 'User',
         separator: '=',
@@ -254,20 +254,20 @@ describe('SSHConfig', function() {
     expect(config.find({ Host: 'tahoe1' })).to.eql({
       type: DIRECTIVE,
       before: '',
-      after: '\n  ',
+      after: '\n',
       param: 'Host',
       separator: ' ',
       value: 'tahoe1',
       config: [{
         type: DIRECTIVE,
-        before: '',
-        after: '\n  ',
+        before: '  ',
+        after: '\n',
         param: 'HostName',
         separator: ' ',
         value: 'tahoe1.com'
       }, {
         type: DIRECTIVE,
-        before: '',
+        before: '  ',
         after: '\n\n',
         param: 'Compression',
         separator: ' ',
@@ -278,13 +278,13 @@ describe('SSHConfig', function() {
     expect(config.find({ Host: '*' })).to.eql({
       type: DIRECTIVE,
       before: '',
-      after: '\n  ',
+      after: '\n',
       param: 'Host',
       separator: ' ',
       value: '*',
       config: [{
         type: DIRECTIVE,
-        before: '',
+        before: '  ',
         after: '\n\n',
         param: 'IdentityFile',
         separator: ' ',
@@ -342,6 +342,32 @@ describe('SSHConfig', function() {
         param: 'IdentityFile',
         separator: ' ',
         value: '~/.ssh/id_rsa'
+      }]
+    })
+  })
+
+  it('.append with original identation recognized', function() {
+    const config = SSHConfig.parse(readFile('fixture/config3'))
+
+    config.append({
+      Host: 'example3.com',
+      User: 'paul'
+    })
+
+    expect(config.find({ Host: 'example3.com' })).to.eql({
+      type: DIRECTIVE,
+      before: '',
+      after: '\n',
+      param: 'Host',
+      separator: ' ',
+      value: 'example3.com',
+      config: [{
+        type: DIRECTIVE,
+        before: '\t',
+        after: '\n\n',
+        param: 'User',
+        separator: ' ',
+        value: 'paul'
       }]
     })
   })

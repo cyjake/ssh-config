@@ -6,7 +6,7 @@
   "rules": {
     "curly": [2, "multi-line"],
     "consistent-return": 0,
-    "quotes": [2, "single"],
+    "quotes": [2, "single", { "avoidEscape": true }],
     "semi": [2, "never"],
     "strict": [2, "global"],
     "no-underscore-dangle": 0,
