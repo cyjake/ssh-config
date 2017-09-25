@@ -99,7 +99,7 @@ class SSHConfig extends Array {
         separator: ' ',
         value: opts[param],
         before: '',
-        after: '\n  '
+        after: '\n'
       }
 
       if (RE_SECTION_DIRECTIVE.test(param)) {
@@ -107,9 +107,12 @@ class SSHConfig extends Array {
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
+        line.before = '  '
         config.push(line)
       }
     }
+
+    config[config.length - 1].after += '\n'
 
     return configWas
   }

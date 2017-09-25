@@ -321,5 +321,28 @@ describe('SSHConfig', function() {
     const opts = config.compute('example2.com')
     expect(opts.User).to.eql('pegg')
     expect(opts.IdentityFile).to.eql(['~/.ssh/id_rsa'])
+    expect(config.find({ Host: 'example2.com' })).to.eql({
+      type: DIRECTIVE,
+      before: '',
+      after: '\n',
+      param: 'Host',
+      separator: ' ',
+      value: 'example2.com',
+      config: [{
+        type: DIRECTIVE,
+        before: '  ',
+        after: '\n',
+        param: 'User',
+        separator: ' ',
+        value: 'pegg'
+      },{
+        type: DIRECTIVE,
+        before: '  ',
+        after: '\n\n',
+        param: 'IdentityFile',
+        separator: ' ',
+        value: '~/.ssh/id_rsa'
+      }]
+    })
   })
 })
