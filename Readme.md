@@ -24,7 +24,7 @@ const config = SSHConfig.parse(`
     ForwardAgent true
 `)
 
-expect(config).to.sql(
+expect(config).to.eql(
   [ { "param": "IdentityFile",
       "value": "~/.ssh/id_rsa" },
     { "param": "Host",
