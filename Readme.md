@@ -61,7 +61,7 @@ console.log(SSHConfig.stringify(config))
 ```
 
 
-### Iterating Sections
+### Iterating over Sections
 
 One needs to iterate over ssh configs mostly because of two reasons.
 
@@ -125,7 +125,7 @@ config.remove({ Host: 'example1' })
 
 ### `.append` sections
 
-Since the parsed config is a sub class if Array, you can append new sections with methods like `.push` or `.concat`.
+Since the parsed config is a sub class of Array, you can append new sections with methods like `.push` or `.concat`.
 
 ```js
 config.push(SSHConfig.parse(`
