@@ -1,4 +1,4 @@
-1.1.4 / 2018-12-06
+1.1.5 / 2018-12-06
 ==================
 
  * Fix: auto insert newline when `.append()`ing existing config without trailing newlines. #15

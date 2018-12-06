@@ -1,3 +1,7 @@
 test
 coverage
 example.js
+History.md
+.eslintrc
+.nyc_output
+.travis.yml
