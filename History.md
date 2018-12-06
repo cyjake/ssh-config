@@ -1,3 +1,9 @@
+1.1.4 / 2018-12-06
+==================
+
+ * Fix: auto insert newline when `.append()`ing existing config without trailing newlines. #15
+
+
 1.1.3 / 2017-09-25
 ==================
 
@@ -65,4 +71,4 @@ This is a breaking change. The parse result is now a subclass of Array instead o
 
  * Init repo
  * Implemented `.parse` and `.stringify`
- 
+

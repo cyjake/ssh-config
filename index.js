@@ -89,8 +89,6 @@ class SSHConfig extends Array {
    * Append new section to existing ssh config.
    */
   append(opts) {
-    let config = this
-    let configWas = this
     let indent = '  '
 
     outer:
@@ -104,6 +102,15 @@ class SSHConfig extends Array {
         }
       }
     }
+
+    let lastLine = this[this.length - 1]
+    if (lastLine.config) lastLine = lastLine.config[lastLine.config.length - 1]
+    if (!lastLine.after.trim()) {
+      lastLine.after = '\n'
+    }
+
+    let config = this
+    let configWas = this
 
     for (const param in opts) {
       const line = {
@@ -124,8 +131,6 @@ class SSHConfig extends Array {
         config.push(line)
       }
     }
-
-    config[config.length - 1].after += '\n'
 
     return configWas
   }

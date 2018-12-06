@@ -58,6 +58,7 @@ for (const line of section.config) {
 
 // The original whitespaces and comments are preserved.
 console.log(SSHConfig.stringify(config))
+// console.log(config.toString())
 ```
 
 

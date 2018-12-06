@@ -141,7 +141,7 @@ describe('SSHConfig', function() {
       Host foo "!*.bar"
     */}))
 
-    expect(config[0].param).to.equal('Host');
+    expect(config[0].param).to.equal('Host')
     expect(config[0].value).to.equal('foo "!*.bar"')
   })
 
@@ -309,7 +309,7 @@ describe('SSHConfig', function() {
     expect(function() { config.remove({}) }).to.throwException()
   })
 
-  it('.append new lines', function() {
+  it('.append lines', function() {
     const config = SSHConfig.parse(readFile('fixture/config2'))
 
     config.append({
@@ -338,7 +338,7 @@ describe('SSHConfig', function() {
       },{
         type: DIRECTIVE,
         before: '  ',
-        after: '\n\n',
+        after: '\n',
         param: 'IdentityFile',
         separator: ' ',
         value: '~/.ssh/id_rsa'
@@ -364,11 +364,29 @@ describe('SSHConfig', function() {
       config: [{
         type: DIRECTIVE,
         before: '\t',
-        after: '\n\n',
+        after: '\n',
         param: 'User',
         separator: ' ',
         value: 'paul'
       }]
     })
+  })
+
+  it('.append with newline insersion', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host test
+        HostName google.com*/}))
+
+    config.append({
+      Host: 'test2',
+      HostName: 'microsoft.com'
+    })
+
+    expect('' + config).to.eql(heredoc(function() {/*
+      Host test
+        HostName google.com
+      Host test2
+        HostName microsoft.com
+    */}))
   })
 })
