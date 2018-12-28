@@ -2,8 +2,8 @@
 
 [![NPM Downloads](https://img.shields.io/npm/dm/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
 [![NPM Version](http://img.shields.io/npm/v/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
-[![Build Status](https://travis-ci.org/dotnil/ssh-config.svg)](https://travis-ci.org/dotnil/ssh-config)
-[![Coverage Status](https://coveralls.io/repos/github/dotnil/ssh-config/badge.svg?branch=master)](https://coveralls.io/github/dotnil/ssh-config?branch=master)
+[![Build Status](https://travis-ci.org/cyjake/ssh-config.svg)](https://travis-ci.org/cyjake/ssh-config)
+[![Coverage Status](https://coveralls.io/repos/github/cyjake/ssh-config/badge.svg?branch=master)](https://coveralls.io/github/cyjake/ssh-config?branch=master)
 
 ## Usage
 
