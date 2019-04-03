@@ -389,4 +389,19 @@ describe('SSHConfig', function() {
         HostName microsoft.com
     */}))
   })
+
+  it('.append to empty config', function() {
+    const config = new SSHConfig
+    config.append({
+      IdentityFile: '~/.ssh/id_rsa',
+      Host: 'test2',
+      HostName: 'example.com'
+    })
+
+    expect('' + config).to.eql(heredoc(function() {/*
+      IdentityFile ~/.ssh/id_rsa
+      Host test2
+        HostName example.com
+    */}))
+  })
 })

@@ -103,10 +103,12 @@ class SSHConfig extends Array {
       }
     }
 
-    let lastLine = this[this.length - 1]
-    if (lastLine.config) lastLine = lastLine.config[lastLine.config.length - 1]
-    if (!lastLine.after.trim()) {
-      lastLine.after = '\n'
+    if (this.length > 0) {
+      let lastLine = this[this.length - 1]
+      if (lastLine.config) lastLine = lastLine.config[lastLine.config.length - 1]
+      if (!lastLine.after.trim()) {
+        lastLine.after = '\n'
+      }
     }
 
     let config = this
@@ -127,7 +129,7 @@ class SSHConfig extends Array {
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
-        line.before = indent
+        line.before = config === configWas ? '' : indent
         config.push(line)
       }
     }
