@@ -1,3 +1,11 @@
+2.0.0 / 2019-06-??
+==================
+
+ * Breaking: parse `Host` values as an Array to hold multiple patterns
+ * Fix: `Host` can contain spaces if quoted with double quotes
+ * Fix: quoted values can contain double quotes once they are escaped with backslash
+
+
 1.1.6 / 2019-04-02
 ==================
 

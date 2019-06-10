@@ -1,39 +1,40 @@
 'use strict'
 
-const expect = require('expect.js')
+const assert = require('assert').strict
 
-const glob = require('../lib/glob')
+const glob = require('../src/glob')
 
 
 describe('glob', function() {
   it('glob asterisk mark', function() {
-    expect(glob('*', 'laputa')).to.be(true)
-    expect(glob('lap*', 'laputa')).to.be(true)
-    expect(glob('lap*ta', 'laputa')).to.be(true)
-    expect(glob('laputa*', 'laputa')).to.be(true)
+    assert(glob('*', 'laputa'))
+    assert(glob('lap*', 'laputa'))
+    assert(glob('lap*ta', 'laputa'))
+    assert(glob('laputa*', 'laputa'))
 
-    expect(glob('lap*', 'castle')).to.be(false)
+    assert(!glob('lap*', 'castle'))
   })
 
   it('glob question mark', function() {
-    expect(glob('lap?ta', 'laputa')).to.be(true)
-    expect(glob('laputa?', 'laputa')).to.be(true)
+    assert(glob('lap?ta', 'laputa'))
+    assert(glob('laputa?', 'laputa'))
 
-    expect(glob('lap?ta', 'castle')).to.be(false)
+    assert(!glob('lap?ta', 'castle'))
   })
 
   it('glob pattern list', function() {
-    expect(glob('laputa,castle', 'laputa')).to.be(true)
-    expect(glob('castle,in,the,sky', 'laputa')).to.be(false)
+    assert(glob('laputa,castle', 'laputa'))
+    assert(!glob('castle,in,the,sky', 'laputa'))
   })
 
   it('glob negated pattern list', function() {
-    expect(glob('!*.dialup.example.com,*.example.com', 'www.example.com')).to.be(true)
-    expect(glob('!*.dialup.example.com,*.example.com', 'www.dialup.example.com')).to.be(false)
-    expect(glob('*.example.com,!*.dialup.example.com', 'www.dialup.example.com')).to.be(false)
+    assert(glob('!*.dialup.example.com,*.example.com', 'www.example.com'))
+
+    assert(!glob('!*.dialup.example.com,*.example.com', 'www.dialup.example.com'))
+    assert(!glob('*.example.com,!*.dialup.example.com', 'www.dialup.example.com'))
   })
 
   it('glob the whole string', function() {
-    expect(glob('example', 'example1')).to.be(false)
+    assert(!glob('example', 'example1'))
   })
 })

@@ -61,7 +61,6 @@ console.log(SSHConfig.stringify(config))
 // console.log(config.toString())
 ```
 
-
 ### Iterating over Sections
 
 One needs to iterate over ssh configs mostly because of two reasons.
@@ -93,7 +92,6 @@ suggested that the general settings shall be at the end of your config file.
 The `IdentityFile` parameter always contain an array to make possible multiple
 `IdentityFile` settings to be able to coexist.
 
-
 ### `.find` sections by Host or Match
 
 **NOTICE**: This method is provided to find the corresponding section in the
@@ -105,24 +103,17 @@ To ditch boilerplate codes like the for loop shown earlier, we can use the
 
 ```js
 config.find({ Host: 'example1' })
+// or the ES2015 Array.prototype.find
+config.find(line => line.param == 'Host' && line.value == 'example1')
 ```
-
-Or you can just brew it yourself:
-
-```js
-config.filter(line => line.param == 'Host' && line.value == 'example1')[0]
-```
-
 
 ### `.remove` sections by Host or other criteria
 
 To remove sections, we can pass the section to `.remove(opts)`.
 
 ```js
-const config = SSHConfig.parse(/* ssh config text */)
 config.remove({ Host: 'example1' })
 ```
-
 
 ### `.append` sections
 
@@ -161,7 +152,6 @@ SSHConfig.stringify(config)
 //   HostName lochness.com
 //   User dinosaur
 ```
-
 
 ## References
 

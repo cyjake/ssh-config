@@ -1,15 +1,18 @@
 'use strict'
 
-const glob = require('./lib/glob')
+const util = require('util')
+const glob = require('./src/glob')
 
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_QUOTED = /^(")(.*)\1$/
 
 const DIRECTIVE = 1
 const COMMENT = 2
 
+function match(line, opts) {
+  return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
+}
 
 class SSHConfig extends Array {
   /**
@@ -18,24 +21,20 @@ class SSHConfig extends Array {
    * @return {Object} The applied options of current Host
    */
   compute(host) {
-    let obj = {}
-    let setProperty = (name, value) => {
+    const obj = {}
+    const setProperty = (name, value) => {
       if (name === 'IdentityFile') {
-        let list = obj[name] || (obj[name] = [])
+        const list = obj[name] || (obj[name] = [])
         list.push(value)
       }
-      else if (obj[name] === undefined) {
+      else if (obj[name] == null) {
         obj[name] = value
       }
     }
 
-    for (let i = 0; i < this.length; i++) {
-      let line = this[i]
-
-      if (line.type !== DIRECTIVE) {
-        continue
-      }
-      else if (line.param === 'Host') {
+    for (const line of this) {
+      if (line.type !== DIRECTIVE) continue
+      if (line.param === 'Host') {
         if (glob(line.value, host)) {
           setProperty(line.param, line.value)
 
@@ -55,27 +54,33 @@ class SSHConfig extends Array {
     return obj
   }
 
-
   /**
    * find section by Host or Match
    */
-  find(opts) {
-    let result = this.constructor.find(this, opts)
-    return result ? result[0] : null
-  }
+  find(opts = {}) {
+    if (typeof opts === 'function') return super.find(opts)
 
+    if (!(opts && ('Host' in opts || 'Match' in opts))) {
+      throw new Error('Can only find by Host or Match')
+    }
+
+    return super.find(line => match(line, opts))
+  }
 
   /**
    * Remove section
    */
-  remove(opts) {
-    let result = this.constructor.find(this, opts)
-
-    if (result) {
-      return this.splice(result[1], 1)
+  remove(opts = {}) {
+    if (!(opts && ('Host' in opts || 'Match' in opts))) {
+      throw new Error('Can only remove by Host or Match')
     }
-  }
 
+    const index = typeof opts === 'function'
+      ? super.findIndex(opts)
+      : super.findIndex(line => match(line, opts))
+
+    if (index >= 0) return this.splice(index, 1)
+  }
 
   /**
    * toString()
@@ -137,34 +142,13 @@ class SSHConfig extends Array {
     return configWas
   }
 
-
-  static find(config, opts) {
-    if (!(opts && ('Host' in opts || 'Match' in opts))) {
-      throw new Error('Can only find by Host or Match')
-    }
-
-    for (let i = 0; i < config.length; i++) {
-      const line = config[i]
-
-      if (line.type === DIRECTIVE &&
-          RE_SECTION_DIRECTIVE.test(line.param) &&
-          line.param in opts &&
-          opts[line.param] === line.value) {
-        return [line, i]
-      }
-    }
-
-    return null
-  }
-
-
   /**
    * Stringify structured object into ssh config text
    */
   static stringify(config) {
     let str = ''
 
-    let format = line => {
+    const format = line => {
       str += line.before
 
       if (line.type === COMMENT) {
@@ -188,16 +172,13 @@ class SSHConfig extends Array {
     return str
   }
 
-
   static get DIRECTIVE() {
     return DIRECTIVE
   }
 
-
   static get COMMENT() {
     return COMMENT
   }
-
 
   /**
    * Parse ssh config text into structured object.
@@ -234,15 +215,15 @@ class SSHConfig extends Array {
       return breaks
     }
 
-    function option() {
-      let opt = ''
+    function parameter() {
+      let param = ''
 
       while (chr && chr !== ' ' && chr !== '=') {
-        opt += chr
+        param += chr
         chr = next()
       }
 
-      return opt
+      return param
     }
 
     function separator() {
@@ -258,17 +239,32 @@ class SSHConfig extends Array {
 
     function value() {
       let val = ''
+      let quoted = false
+      let escaped = false
 
       while (chr && !RE_LINE_BREAK.test(chr)) {
-        val += chr
+        if (escaped) {
+          val += chr === '"' ? chr : `\\${chr}`
+          escaped = false
+        }
+        else if (chr === '"') {
+          quoted = !quoted
+        }
+        else if (chr === '\\') {
+          escaped = true
+        }
+        else {
+          val += chr
+        }
         chr = next()
       }
 
+      if (quoted || escaped) throw new Error('Unexpected line break')
       return val.trim()
     }
 
     function comment() {
-      let type = COMMENT
+      const type = COMMENT
       let content = ''
 
       while (chr && !RE_LINE_BREAK.test(chr)) {
@@ -279,29 +275,64 @@ class SSHConfig extends Array {
       return { type, content }
     }
 
+    // Host *.co.uk
+    // Host * !local.dev
+    // Host "foo bar"
+    function patterns() {
+      const results = []
+      let val = ''
+      let quoted = false
+      let escaped = false
+
+      while (chr && !RE_LINE_BREAK.test(chr)) {
+        if (escaped) {
+          val += chr === '"' ? chr : `\\${chr}`
+          escaped = false
+        }
+        else if (chr === '"') {
+          quoted = !quoted
+        }
+        else if (chr === '\\') {
+          escaped = true
+        }
+        else if (quoted) {
+          val += chr
+        }
+        else if (chr === ' ' && val) {
+          results.push(val)
+          val = ''
+        }
+        else {
+          val += chr
+        }
+
+        chr = next()
+      }
+
+      if (quoted || escaped) throw new Error('Unexpected line break')
+      results.push(val)
+      return results.length > 1 ? results : results[0]
+    }
+
     function directive() {
-      let type = DIRECTIVE
+      const type = DIRECTIVE
+      const param = parameter()
 
       return {
         type,
-        param: option(),
+        param,
         separator: separator(),
-        value: value()
+        value: param.toLowerCase() === 'host' ? patterns() : value()
       }
     }
 
     function line() {
-      let before = space()
-      let node = chr === '#' ? comment() : directive()
-      let after = linebreak()
+      const before = space()
+      const node = chr === '#' ? comment() : directive()
+      const after = linebreak()
 
       node.before = before
       node.after = after
-
-      if (RE_QUOTED.test(node.value)) {
-        node.value = node.value.replace(RE_QUOTED, '$2')
-        node.quoted = true
-      }
 
       return node
     }
@@ -324,5 +355,10 @@ class SSHConfig extends Array {
   }
 }
 
+SSHConfig.find = util.deprecate((config, opts) => {
+  const line = config.find(opts)
+  if (line) return [line, config.indexOf(line)]
+  return null
+}, 'SSHConfig.find() is deprected. Use SSHConfig.prototype.find() instead.')
 
 module.exports = SSHConfig
