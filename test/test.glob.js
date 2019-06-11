@@ -1,6 +1,6 @@
 'use strict'
 
-const assert = require('assert').strict
+const assert = require('assert').strict || require('assert')
 
 const glob = require('../src/glob')
 
