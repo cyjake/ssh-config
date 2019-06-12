@@ -148,6 +148,14 @@ class SSHConfig extends Array {
   static stringify(config) {
     let str = ''
 
+    const formatValue = (value, quoted) => {
+      if (Array.isArray(value)) {
+        return value.map(chunk => formatValue(chunk, RE_SPACE.test(chunk))).join(' ')
+      }
+
+      return quoted ? `"${value}"` : value
+    }
+
     const format = line => {
       str += line.before
 
@@ -155,9 +163,10 @@ class SSHConfig extends Array {
         str += line.content
       }
       else if (line.type === DIRECTIVE) {
-        str += line.quoted || (line.param == 'IdentityFile' && RE_SPACE.test(line.value))
-          ? `${line.param}${line.separator}"${line.value}"`
-          : `${line.param}${line.separator}${line.value}`
+        const quoted = line.quoted
+          || (/IdentityFile/i.test(line.param) && RE_SPACE.test(line.value))
+        const value = formatValue(line.value, quoted)
+        str += `${line.param}${line.separator}${value}`
       }
 
       str += line.after
@@ -243,11 +252,13 @@ class SSHConfig extends Array {
       let escaped = false
 
       while (chr && !RE_LINE_BREAK.test(chr)) {
+        // backslash escapes only double quotes
         if (escaped) {
           val += chr === '"' ? chr : `\\${chr}`
           escaped = false
         }
-        else if (chr === '"') {
+        // ProxyCommand ssh -W "%h:%p" firewall.example.org
+        else if (chr === '"' && (!val || quoted)) {
           quoted = !quoted
         }
         else if (chr === '\\') {
@@ -259,7 +270,10 @@ class SSHConfig extends Array {
         chr = next()
       }
 
-      if (quoted || escaped) throw new Error('Unexpected line break')
+      if (quoted || escaped) {
+        throw new Error(`Unexpected line break at ${val}`)
+      }
+
       return val.trim()
     }
 
@@ -298,9 +312,12 @@ class SSHConfig extends Array {
         else if (quoted) {
           val += chr
         }
-        else if (chr === ' ' && val) {
-          results.push(val)
-          val = ''
+        else if (chr === ' ') {
+          if (val) {
+            results.push(val)
+            val = ''
+          }
+          // otherwise ignore the space
         }
         else {
           val += chr
@@ -309,7 +326,9 @@ class SSHConfig extends Array {
         chr = next()
       }
 
-      if (quoted || escaped) throw new Error('Unexpected line break')
+      if (quoted || escaped) {
+        throw new Error(`Unexpected line break at ${results.concat(val).join(' ')}`)
+      }
       results.push(val)
       return results.length > 1 ? results : results[0]
     }
@@ -317,13 +336,16 @@ class SSHConfig extends Array {
     function directive() {
       const type = DIRECTIVE
       const param = parameter()
-
-      return {
+      const multiple = param.toLowerCase() == 'host'
+      const result = {
         type,
         param,
         separator: separator(),
-        value: param.toLowerCase() === 'host' ? patterns() : value()
+        quoted: !multiple && chr === '"',
+        value: multiple ? patterns() : value()
       }
+      if (!result.quoted) delete result.quoted
+      return result
     }
 
     function line() {

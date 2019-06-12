@@ -130,6 +130,24 @@ describe('parse', function() {
     assert.equal(config[1].value, 'C:\\Users\\John Doe\\.ssh\\id_rsa')
   })
 
+  it('.parse quoted values with escaped double quotes', function() {
+    const config = parse('IdentityFile "C:\\Users\\John\\" Doe\\.ssh\\id_rsa"')
+    assert.equal(config[0].param, 'IdentityFile')
+    assert.equal(config[0].value, 'C:\\Users\\John" Doe\\.ssh\\id_rsa')
+  })
+
+  it('.parse unquoted values that contain double quotes', function() {
+    const config = parse('ProxyCommand ssh -W "%h:%p" firewall.example.org')
+    assert.equal(config[0].param, 'ProxyCommand')
+    assert.equal(config[0].value, 'ssh -W "%h:%p" firewall.example.org')
+  })
+
+  it('.parse open ended values', function() {
+    assert.throws(() => parse('IdentityFile "C:\\'), /Unexpected line break/)
+    assert.throws(() => parse('Host "foo bar'), /Unexpected line break/)
+    assert.throws(() => parse('Host "foo bar\\"'), /Unexpected line break/)
+  })
+
   it('.parse Host with quoted hosts that contain spaces', function() {
     const config = parse('Host "foo bar"')
     assert.equal(config[0].param, 'Host')
@@ -137,7 +155,7 @@ describe('parse', function() {
   })
 
   it('.parse Host with multiple patterns', function() {
-    const config = parse('Host foo "!*.bar" "baz ham" "foo\\"bar"')
+    const config = parse('Host foo "!*.bar"  "baz ham"   "foo\\"bar"')
 
     assert.equal(config[0].param, 'Host')
     assert.deepEqual(config[0].value, [
@@ -145,6 +163,18 @@ describe('parse', function() {
       '!*.bar',
       'baz ham',
       'foo"bar'
+    ])
+  })
+
+  it('.parse Host with multiple random patterns', function() {
+    const config = parse('Host me local    wi*ldcard?  thisVM "two words"')
+
+    assert.deepEqual(config[0].value, [
+      'me',
+      'local',
+      'wi*ldcard?',
+      'thisVM',
+      'two words'
     ])
   })
 })

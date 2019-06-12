@@ -238,7 +238,7 @@ describe('SSHConfig', function() {
   })
 
   it('.append to empty config', function() {
-    const config = new SSHConfig
+    const config = new SSHConfig()
     config.append({
       IdentityFile: '~/.ssh/id_rsa',
       Host: 'test2',
@@ -250,5 +250,18 @@ describe('SSHConfig', function() {
       Host test2
         HostName example.com
     */}))
+  })
+
+  it('SSHConfig.find should be deprecated', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host foo
+        HostName example.com
+    */}))
+    const result = SSHConfig.find(config, { Host: 'foo' })
+    assert(Array.isArray(result))
+    const section = result[0]
+    assert(section != null)
+    assert.equal(section.param, 'Host')
+    assert.equal(section.value, 'foo')
   })
 })

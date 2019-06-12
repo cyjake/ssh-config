@@ -16,7 +16,7 @@ describe('stringify', function() {
   it('.stringify the parsed object back to string', function() {
     const fixture = readFile('fixture/config')
     const config = parse(fixture)
-    assert(fixture === stringify(config))
+    assert.equal(fixture, stringify(config))
   })
 
   it('.stringify config with white spaces and comments retained', function() {
@@ -29,7 +29,7 @@ describe('stringify', function() {
         User keanu
     */}))
 
-    assert(stringify(config) === heredoc(function() {/*
+    assert.equal(stringify(config), heredoc(function() {/*
       # Lake tahoe
       Host tahoe4
 
@@ -41,18 +41,30 @@ describe('stringify', function() {
 
 
   it('.stringify IdentityFile entries with double quotes', function() {
-    let config = parse(heredoc(function() {/*
+    const config = parse(heredoc(function() {/*
       Host example
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
     */}))
 
-    assert(stringify(config) === heredoc(function() {/*
+    assert.equal(stringify(config), heredoc(function() {/*
       Host example
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
+    */}))
+  })
+
+  it('.stringify Host entries with multiple patterns', function() {
+    const config = parse(heredoc(function() {/*
+      Host foo bar  "baz"   "egg ham"
+        HostName example.com
+    */}))
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host foo bar baz "egg ham"
+        HostName example.com
     */}))
   })
 })
