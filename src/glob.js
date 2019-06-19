@@ -1,7 +1,9 @@
 'use strict'
 
 function match(pattern, str) {
-  pattern = pattern.replace(/\./g, '\\.')
+  pattern = pattern
+    .replace(/\./g, '\\.')
+    .replace(/\+/g, '\\+')
     .replace(/\*/g, '.*')
     .replace(/\?/g, '.?')
 
@@ -16,7 +18,7 @@ function match(pattern, str) {
  * @param {string} str
  */
 function glob(patternList, str) {
-  const patterns = Array.isArray(patternList) ? patternList : patternList.split(/[,\s]+/)
+  const patterns = Array.isArray(patternList) ? patternList : patternList.split(/,/)
 
   // > If a negated entry is matched, then the Host entry is ignored, regardless of whether any other patterns on the line match.
   let result = false
@@ -26,6 +28,7 @@ function glob(patternList, str) {
     if (negate && match(pattern.slice(1), str)) {
       return false
     } else if (match(pattern, str)) {
+      // wait until all of the pattern match results because there might be a negated pattern
       result = true
     }
   }

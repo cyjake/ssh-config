@@ -37,4 +37,9 @@ describe('glob', function() {
   it('glob the whole string', function() {
     assert(!glob('example', 'example1'))
   })
+
+  it('glob chaining hosts', function() {
+    assert(glob('*/*', 'host1/host2'))
+    assert(glob('*+*', 'host1+host2'))
+  })
 })

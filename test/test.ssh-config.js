@@ -73,6 +73,24 @@ describe('SSHConfig', function() {
     }
   })
 
+  /**
+   * - https://github.com/cyjake/ssh-config/issues/19
+   * - https://github.com/microsoft/vscode-remote-release/issues/612
+   * - https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Proxies_and_Jump_Hosts#Recursively_Chaining_an_Arbitrary_Number_of_Hosts
+   */
+  it('.compute by Host with chaining hosts', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host *+*
+        ProxyCommand ssh -W $(echo %h | sed 's/^.*+//;s/^\([^:]*$\)/\1:22/') $(echo %h | sed 's/+[^+]*$//;s/\([^+%%]*\)%%\([^+]*\)$/\2 -l \1/;s/:\([^:+]*\)$/ -p \1/')
+    */}))
+
+    for (const host of ['host1+host2', 'host1:2022+host2:2224']) {
+      const result = config.compute(host)
+      assert(result)
+      assert(result.hasOwnProperty('ProxyCommand'))
+    }
+  })
+
   it('.find with nothing shall yield error', function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     assert.throws(function() { config.find() })

@@ -10,7 +10,7 @@ const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 const DIRECTIVE = 1
 const COMMENT = 2
 
-function match(line, opts) {
+function compare(line, opts) {
   return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
 }
 
@@ -64,7 +64,7 @@ class SSHConfig extends Array {
       throw new Error('Can only find by Host or Match')
     }
 
-    return super.find(line => match(line, opts))
+    return super.find(line => compare(line, opts))
   }
 
   /**
@@ -77,7 +77,7 @@ class SSHConfig extends Array {
 
     const index = typeof opts === 'function'
       ? super.findIndex(opts)
-      : super.findIndex(line => match(line, opts))
+      : super.findIndex(line => compare(line, opts))
 
     if (index >= 0) return this.splice(index, 1)
   }
