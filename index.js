@@ -227,7 +227,7 @@ class SSHConfig extends Array {
     function parameter() {
       let param = ''
 
-      while (chr && chr !== ' ' && chr !== '=') {
+      while (chr && /[^ \t=]/.test(chr)) {
         param += chr
         chr = next()
       }
@@ -312,7 +312,7 @@ class SSHConfig extends Array {
         else if (quoted) {
           val += chr
         }
-        else if (chr === ' ') {
+        else if (/[ \t]/.test(chr)) {
           if (val) {
             results.push(val)
             val = ''
@@ -336,6 +336,7 @@ class SSHConfig extends Array {
     function directive() {
       const type = DIRECTIVE
       const param = parameter()
+      // Host "foo bar" baz
       const multiple = param.toLowerCase() == 'host'
       const result = {
         type,

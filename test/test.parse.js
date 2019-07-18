@@ -177,4 +177,29 @@ describe('parse', function() {
       'two words'
     ])
   })
+
+  it('.parse parameter and value separated with tab', function() {
+    /**
+     * Host foo
+     *   HostName example.com
+     */
+    const config = parse('Host\tfoo\n\tHostName\texample.com')
+
+    assert.deepEqual(config[0], {
+      type: 1,
+      param: 'Host',
+      separator: '\t',
+      value: 'foo',
+      before: '',
+      after: '\n',
+      config: new SSHConfig({
+        type: 1,
+        param: 'HostName',
+        separator: '\t',
+        value: 'example.com',
+        before: '\t',
+        after: ''
+      })
+    })
+  })
 })
