@@ -5,6 +5,7 @@
  * Fix: `Host` can contain spaces if quoted with double quotes
  * Fix: quoted values can contain double quotes once they are escaped with backslash
  * Fix: escape + when converting patterns to regexp
+ * Fix: parameter/value pairs separated with tab charactor
 
 
 1.1.6 / 2019-04-02
