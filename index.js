@@ -111,9 +111,7 @@ class SSHConfig extends Array {
     if (this.length > 0) {
       let lastLine = this[this.length - 1]
       if (lastLine.config) lastLine = lastLine.config[lastLine.config.length - 1]
-      if (!lastLine.after.trim()) {
-        lastLine.after = '\n'
-      }
+      lastLine.after = '\n'
     }
 
     let config = this
