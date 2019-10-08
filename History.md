@@ -1,7 +1,8 @@
-2.0.0 / 2019-06-??
+2.0.0 / 2019-10-08
 ==================
 
  * Breaking: parse `Host` values as an Array to hold multiple patterns
+ * Breaking: an extra line break will always be added when `.append()`ing config
  * Fix: `Host` can contain spaces if quoted with double quotes
  * Fix: quoted values can contain double quotes once they are escaped with backslash
  * Fix: escape + when converting patterns to regexp
