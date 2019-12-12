@@ -1,3 +1,10 @@
+3.0.0 / 2019-12-12
+==================
+
+ * Breaking: prefer to separate sections with `\n\n`
+ * Breaking: drop `SSHConfig.find()`, please use `SSHConfig.prototype.find()` instead
+
+
 2.0.0 / 2019-10-08
 ==================
 

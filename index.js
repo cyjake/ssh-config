@@ -1,6 +1,5 @@
 'use strict'
 
-const util = require('util')
 const glob = require('./src/glob')
 
 const RE_SPACE = /\s/
@@ -108,14 +107,12 @@ class SSHConfig extends Array {
       }
     }
 
-    if (this.length > 0) {
-      let lastLine = this[this.length - 1]
-      if (lastLine.config && lastLine.config.length) lastLine = lastLine.config[lastLine.config.length - 1]
-      lastLine.after = '\n'
-    }
-
-    let config = this
+    const lastEntry = this.length > 0 ? this[this.length - 1] : null
+    let config = lastEntry && lastEntry.config || this
     let configWas = this
+
+    let lastLine = config.length > 0 ? config[config.length - 1] : lastEntry
+    if (lastLine && !lastLine.after) lastLine.after = '\n'
 
     for (const param in opts) {
       const line = {
@@ -129,12 +126,16 @@ class SSHConfig extends Array {
 
       if (RE_SECTION_DIRECTIVE.test(param)) {
         config = configWas
+        // separate sections with an extra newline
+        // https://github.com/cyjake/ssh-config/issues/23#issuecomment-564768248
+        if (lastLine.after === '\n') lastLine.after += '\n'
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
         line.before = config === configWas ? '' : indent
         config.push(line)
       }
+      lastLine = line
     }
 
     return configWas
@@ -375,11 +376,5 @@ class SSHConfig extends Array {
     return configWas
   }
 }
-
-SSHConfig.find = util.deprecate((config, opts) => {
-  const line = config.find(opts)
-  if (line) return [line, config.indexOf(line)]
-  return null
-}, 'SSHConfig.find() is deprected. Use SSHConfig.prototype.find() instead.')
 
 module.exports = SSHConfig

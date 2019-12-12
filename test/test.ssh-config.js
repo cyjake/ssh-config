@@ -247,9 +247,10 @@ describe('SSHConfig', function() {
       HostName: 'microsoft.com'
     })
 
-    assert(config.toString() === heredoc(function() {/*
+    assert.equal(config.toString(), heredoc(function() {/*
       Host test
         HostName google.com
+
       Host test2
         HostName microsoft.com
     */}))
@@ -263,23 +264,23 @@ describe('SSHConfig', function() {
       HostName: 'example.com'
     })
 
-    assert(config.toString() === heredoc(function() {/*
+    assert.equal(config.toString(), heredoc(function() {/*
       IdentityFile ~/.ssh/id_rsa
+
       Host test2
         HostName example.com
     */}))
   })
 
-  it('SSHConfig.find should be deprecated', function() {
-    const config = SSHConfig.parse(heredoc(function() {/*
-      Host foo
+  it('.append to empty section config', function() {
+    const config = SSHConfig.parse('Host test')
+    config.append({
+      HostName: 'example.com'
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host test
         HostName example.com
     */}))
-    const result = SSHConfig.find(config, { Host: 'foo' })
-    assert(Array.isArray(result))
-    const section = result[0]
-    assert(section != null)
-    assert.equal(section.param, 'Host')
-    assert.equal(section.value, 'foo')
   })
 })
