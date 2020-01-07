@@ -12,6 +12,12 @@ const COMMENT = 2
 function compare(line, opts) {
   return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
 }
+const MULTIPLE_VALUE_PROPS = [
+  'IdentityFile',
+  'LocalForward',
+  'RemoteForward',
+  'DynamicForward'
+];
 
 class SSHConfig extends Array {
   /**
@@ -22,7 +28,7 @@ class SSHConfig extends Array {
   compute(host) {
     const obj = {}
     const setProperty = (name, value) => {
-      if (name === 'IdentityFile') {
+      if (MULTIPLE_VALUE_PROPS.includes(name)) {
         const list = obj[name] || (obj[name] = [])
         list.push(value)
       }
