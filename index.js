@@ -128,7 +128,7 @@ class SSHConfig extends Array {
         config = configWas
         // separate sections with an extra newline
         // https://github.com/cyjake/ssh-config/issues/23#issuecomment-564768248
-        if (lastLine.after === '\n') lastLine.after += '\n'
+        if (lastLine && lastLine.after === '\n') lastLine.after += '\n'
         config.push(line)
         config = line.config = new SSHConfig()
       } else {
