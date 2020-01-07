@@ -272,6 +272,19 @@ describe('SSHConfig', function() {
     */}))
   })
 
+  it('.append to empty config with new section', function() {
+    const config = new SSHConfig();
+    config.append({
+      Host: 'test',
+      HostName: 'example.com',
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host test
+        HostName example.com
+    */}))
+  })
+
   it('.append to empty section config', function() {
     const config = SSHConfig.parse('Host test')
     config.append({
