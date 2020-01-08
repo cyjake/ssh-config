@@ -296,4 +296,27 @@ describe('SSHConfig', function() {
         HostName example.com
     */}))
   })
+
+  it('.compute with properties with multiple values', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host myHost
+        HostName example.com
+        LocalForward 1234 localhost:1234
+        CertificateFile /foo/bar
+        LocalForward 9876 localhost:9876
+        CertificateFile /foo/bar2
+        RemoteForward 8888 localhost:8888
+
+      Host *
+        CertificateFile /foo/bar3
+    */}))
+
+    assert.deepEqual(config.compute('myHost'), {
+      Host: 'myHost',
+      HostName: 'example.com',
+      LocalForward: ['1234 localhost:1234', '9876 localhost:9876'],
+      RemoteForward: ['8888 localhost:8888'],
+      CertificateFile: ['/foo/bar', '/foo/bar2', '/foo/bar3']
+    })
+  })
 })

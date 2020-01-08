@@ -12,11 +12,13 @@ const COMMENT = 2
 function compare(line, opts) {
   return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
 }
+
 const MULTIPLE_VALUE_PROPS = [
   'IdentityFile',
   'LocalForward',
   'RemoteForward',
-  'DynamicForward'
+  'DynamicForward',
+  'CertificateFile'
 ];
 
 class SSHConfig extends Array {
