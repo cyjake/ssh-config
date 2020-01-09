@@ -1,13 +1,19 @@
+4.0.0 / 2020-01-09
+==================
+
+ * Fix: allow forwarding directives (and `CertificateFile`) to have multiple values (#30)
+
+
 3.0.1 / 2020-01-07
 ==================
 
- * Fix: append new section to empty config
+ * Fix: append new section to empty config (#27)
 
 
 3.0.0 / 2019-12-12
 ==================
 
- * Breaking: prefer to separate sections with `\n\n`
+ * Breaking: prefer to separate sections with `\n\n` (#23, #24)
  * Breaking: drop `SSHConfig.find()`, please use `SSHConfig.prototype.find()` instead
 
 
