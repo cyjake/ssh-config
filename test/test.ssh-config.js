@@ -273,7 +273,7 @@ describe('SSHConfig', function() {
   })
 
   it('.append to empty config with new section', function() {
-    const config = new SSHConfig();
+    const config = new SSHConfig()
     config.append({
       Host: 'test',
       HostName: 'example.com',

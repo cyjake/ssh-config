@@ -19,7 +19,7 @@ const MULTIPLE_VALUE_PROPS = [
   'RemoteForward',
   'DynamicForward',
   'CertificateFile'
-];
+]
 
 class SSHConfig extends Array {
   /**
@@ -366,7 +366,6 @@ class SSHConfig extends Array {
 
       return node
     }
-
 
     while (chr) {
       let node = line()
