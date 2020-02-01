@@ -178,6 +178,17 @@ describe('parse', function() {
     ])
   })
 
+  // #32
+  it('.parse Host with trailing spaces', function() {
+    const config = parse(heredoc(function() {/*
+      Host penlv
+        HostName penlv-devbox
+        User penlv
+    */}).replace('penlv\n', 'penlv \n'))
+
+    assert.deepEqual(config[0].value, 'penlv')
+  })
+
   it('.parse parameter and value separated with tab', function() {
     /**
      * Host foo

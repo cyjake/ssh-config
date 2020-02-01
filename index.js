@@ -336,7 +336,7 @@ class SSHConfig extends Array {
       if (quoted || escaped) {
         throw new Error(`Unexpected line break at ${results.concat(val).join(' ')}`)
       }
-      results.push(val)
+      if (val) results.push(val)
       return results.length > 1 ? results : results[0]
     }
 
