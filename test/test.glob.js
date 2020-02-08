@@ -42,4 +42,12 @@ describe('glob', function() {
     assert(glob('*/*', 'host1/host2'))
     assert(glob('*+*', 'host1+host2'))
   })
+
+  it('glob special chars', function() {
+    assert(glob('(foo', '(foo'))
+    assert(!glob('(foo)', 'foo'))
+    assert(glob('[foo]', '[foo]'))
+    assert(glob('{foo', '{foo'))
+    assert(glob('^foo|ba\\r$', '^foo|ba\\r$'))
+  })
 })
