@@ -1,9 +1,16 @@
 'use strict'
 
+function escapeChars(str, chars) {
+  for (let char of chars) {
+    str = str.replace(new RegExp('\\' + char, 'g'), '\\' + char)
+  }
+
+  return str
+}
+
 function match(pattern, str) {
+  pattern = escapeChars(pattern, '\\()[]{}.+^$|');
   pattern = pattern
-    .replace(/\./g, '\\.')
-    .replace(/\+/g, '\\+')
     .replace(/\*/g, '.*')
     .replace(/\?/g, '.?')
 
