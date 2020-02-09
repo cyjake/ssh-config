@@ -1,3 +1,9 @@
+4.0.2 / 2020-02-09
+==================
+
+ * fix: 'compute' fails when hosts contain regex chars #34 @roblourens
+
+
 4.0.1 / 2020-02-01
 ==================
 
