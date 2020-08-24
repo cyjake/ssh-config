@@ -5,6 +5,7 @@ const glob = require('./src/glob')
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -171,7 +172,7 @@ class SSHConfig extends Array {
       }
       else if (line.type === DIRECTIVE) {
         const quoted = line.quoted
-          || (/IdentityFile/i.test(line.param) && RE_SPACE.test(line.value))
+          || (!/Command$/i.test(line.param) && RE_SPACE.test(line.value))
         const value = formatValue(line.value, quoted)
         str += `${line.param}${line.separator}${value}`
       }
@@ -299,7 +300,7 @@ class SSHConfig extends Array {
     // Host *.co.uk
     // Host * !local.dev
     // Host "foo bar"
-    function patterns() {
+    function values() {
       const results = []
       let val = ''
       let quoted = false
@@ -344,13 +345,13 @@ class SSHConfig extends Array {
       const type = DIRECTIVE
       const param = parameter()
       // Host "foo bar" baz
-      const multiple = param.toLowerCase() == 'host'
+      const multiple = RE_MULTI_VALUE_DIRECTIVE.test(param)
       const result = {
         type,
         param,
         separator: separator(),
         quoted: !multiple && chr === '"',
-        value: multiple ? patterns() : value()
+        value: multiple ? values() : value()
       }
       if (!result.quoted) delete result.quoted
       return result
