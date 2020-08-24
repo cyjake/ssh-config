@@ -67,4 +67,17 @@ describe('stringify', function() {
         HostName example.com
     */}))
   })
+
+  // #36
+  it('.stringify User names with spaces', function() {
+    const config = parse(heredoc(function() {/*
+      Host example
+        User "dan abramov"
+    */}))
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host example
+        User "dan abramov"
+    */}))
+  })
 })
