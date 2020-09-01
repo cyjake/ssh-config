@@ -6,6 +6,7 @@ const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
+const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentifyFile|User)$/i
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -172,7 +173,7 @@ class SSHConfig extends Array {
       }
       else if (line.type === DIRECTIVE) {
         const quoted = line.quoted
-          || (!/Command$/i.test(line.param) && RE_SPACE.test(line.value))
+          || (RE_QUOTE_DIRECTIVE.test(line.param) && RE_SPACE.test(line.value))
         const value = formatValue(line.value, quoted)
         str += `${line.param}${line.separator}${value}`
       }
