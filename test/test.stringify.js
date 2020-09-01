@@ -80,4 +80,17 @@ describe('stringify', function() {
         User "dan abramov"
     */}))
   })
+
+  // #38
+  it('.stringify LocalForward without quotes', function() {
+    const config = parse(heredoc(function() {/*
+      Host example
+        LocalForward 1234 localhost:1234
+    */}))
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host example
+        LocalForward 1234 localhost:1234
+    */}))
+  })
 })

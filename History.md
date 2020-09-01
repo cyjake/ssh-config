@@ -1,7 +1,13 @@
+4.0.4 / 2020-09-01
+==================
+
+ * fix: should not quote directives like LocalForward (#38)
+
+
 4.0.3 / 2020-08-24
 ==================
 
- * fix: quote values that contain white spaces
+ * fix: quote values that contain white spaces (36)
 
 
 4.0.2 / 2020-02-09
