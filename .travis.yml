@@ -8,4 +8,5 @@ node_js:
 
 after_success:
   - npm install coveralls
+  - npm run lint
   - npm run coveralls

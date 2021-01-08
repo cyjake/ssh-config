@@ -9,7 +9,7 @@ function escapeChars(str, chars) {
 }
 
 function match(pattern, str) {
-  pattern = escapeChars(pattern, '\\()[]{}.+^$|');
+  pattern = escapeChars(pattern, '\\()[]{}.+^$|')
   pattern = pattern
     .replace(/\*/g, '.*')
     .replace(/\?/g, '.?')
