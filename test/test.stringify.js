@@ -93,4 +93,30 @@ describe('stringify', function() {
         LocalForward 1234 localhost:1234
     */}))
   })
+
+  it('.stringify multiple LocalForward', function() {
+    const config = parse(heredoc(function() {/*
+      Host foo
+        LocalForward 3128 127.0.0.1:3128
+        LocalForward 3000 127.0.0.1:3000
+    */}))
+
+    config.append(  {
+      Host: 'bar',
+      LocalForward: [
+        '3128 127.0.0.1:3128',
+        '3000 127.0.0.1:3000'
+      ]
+    })
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host foo
+        LocalForward 3128 127.0.0.1:3128
+        LocalForward 3000 127.0.0.1:3000
+
+      Host bar
+        LocalForward 3128 127.0.0.1:3128
+        LocalForward 3000 127.0.0.1:3000
+    */}))
+  })
 })

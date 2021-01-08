@@ -93,6 +93,7 @@ class SSHConfig extends Array {
 
   /**
    * toString()
+   * @returns {string}
    */
   toString() {
     return this.constructor.stringify(this)
@@ -101,6 +102,7 @@ class SSHConfig extends Array {
 
   /**
    * Append new section to existing ssh config.
+   * @param {Object} opts
    */
   append(opts) {
     let indent = '  '
@@ -153,16 +155,24 @@ class SSHConfig extends Array {
 
   /**
    * Stringify structured object into ssh config text
+   * @param {SSHConfig} config
+   * @returns {string}
    */
   static stringify(config) {
     let str = ''
 
-    const formatValue = (value, quoted) => {
+    function formatValue(value, quoted) {
       if (Array.isArray(value)) {
         return value.map(chunk => formatValue(chunk, RE_SPACE.test(chunk))).join(' ')
       }
-
       return quoted ? `"${value}"` : value
+    }
+
+    function formatDirective(line) {
+      const quoted = line.quoted
+        || (RE_QUOTE_DIRECTIVE.test(line.param) && RE_SPACE.test(line.value))
+      const value = formatValue(line.value, quoted)
+      return `${line.param}${line.separator}${value}`
     }
 
     const format = line => {
@@ -171,11 +181,14 @@ class SSHConfig extends Array {
       if (line.type === COMMENT) {
         str += line.content
       }
+      else if (line.type === DIRECTIVE && MULTIPLE_VALUE_PROPS.includes(line.param)) {
+        [].concat(line.value).forEach(function (value, i, values) {
+          str += formatDirective({ ...line, value })
+          if (i < values.length - 1) str += `\n${line.before}`
+        })
+      }
       else if (line.type === DIRECTIVE) {
-        const quoted = line.quoted
-          || (RE_QUOTE_DIRECTIVE.test(line.param) && RE_SPACE.test(line.value))
-        const value = formatValue(line.value, quoted)
-        str += `${line.param}${line.separator}${value}`
+        str += formatDirective(line)
       }
 
       str += line.after
