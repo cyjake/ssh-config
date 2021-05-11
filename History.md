@@ -1,7 +1,14 @@
+4.0.6 / 2021-05-11
+==================
+
+ * fix: IdentityFile parameter value should be quoted if contains space
+
+
 4.0.5 / 2021-01-08
 ==================
 
  * fix: multiple LocalForward values should be formartted into multiple lines
+
 
 4.0.4 / 2020-09-01
 ==================
