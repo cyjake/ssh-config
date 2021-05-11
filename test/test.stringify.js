@@ -119,4 +119,17 @@ describe('stringify', function() {
         LocalForward 3000 127.0.0.1:3000
     */}))
   })
+
+  // #43
+  it('.stringify IdentityFile with spaces', function() {
+    const config = new SSHConfig().append({
+      Host: 'foo',
+      IdentityFile: 'C:\\Users\\John Doe\\.ssh\\id_rsa'
+    })
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host foo
+        IdentityFile "C:\Users\John Doe\.ssh\id_rsa"
+    */}))
+  })
 })
