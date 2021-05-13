@@ -23,7 +23,7 @@
     "coveralls": "nyc mocha --exit && nyc report --reporter=text-lcov | coveralls"
   },
   "engine": {
-    "node": ">= 6.0.0"
+    "node": ">= 10.0.0"
   },
   "license": "MIT"
 }
