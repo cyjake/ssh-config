@@ -455,4 +455,24 @@ describe('SSHConfig', function() {
         User brian
     */}))
   })
+
+  it('.prepend to empty section and existing section config', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host test
+
+      Host test2
+        Hostname google.com*/}))
+    config.prepend({
+      HostName: 'example.com',
+      User: 'brian'
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host test
+        HostName example.com
+        User brian
+      
+      Host test2
+        Hostname google.com*/}))
+  })
 })

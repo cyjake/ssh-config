@@ -204,9 +204,9 @@ class SSHConfig extends Array {
         // find the first config in the old config
         const firstConfig = this.length > 0 ? this[0] : null
         config = firstConfig && firstConfig.config || this
-        if(!firstConfig.after.match('\n')) {
-          firstConfig.after += '\n'
-        }
+
+        // remove extra newlines for sectioning to add fields instead
+        firstConfig.after = '\n'
 
         // append to first config
         line.before = indent
