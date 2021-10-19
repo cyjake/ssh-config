@@ -154,6 +154,79 @@ class SSHConfig extends Array {
   }
 
   /**
+   * Prepend new section to existing ssh config.
+   * @param {Object} opts
+   */
+   prepend(opts) {
+    let indent = '  '
+
+    outer:
+    for (const line of this) {
+      if (RE_SECTION_DIRECTIVE.test(line.param)) {
+        for (const subline of line.config) {
+          if (subline.before) {
+            indent = subline.before
+            break outer
+          }
+        }
+      }
+    }
+
+    let config = this
+    let directiveLineFound = false
+
+    for (const param in opts) {
+      const line = {
+        type: DIRECTIVE,
+        param,
+        separator: ' ',
+        value: opts[param],
+        before: '',
+        after: '\n'
+      }
+
+      if (RE_SECTION_DIRECTIVE.test(param)) {
+        config.unshift(line)
+        config = line.config = new SSHConfig()
+        directiveLineFound = true
+        continue
+      }
+
+      if(!directiveLineFound && RE_QUOTE_DIRECTIVE.test(param)) {
+        line.after += '\n'
+        config.push(line)
+        config = line.config = new SSHConfig()
+        directiveLineFound = true
+        continue
+      }
+
+      if(!directiveLineFound) {
+        // find the first config in the old config
+        const firstConfig = this.length > 0 ? this[0] : null
+        config = firstConfig && firstConfig.config || this
+        if(!firstConfig.after.match('\n')) {
+          firstConfig.after += '\n'
+        }
+
+        // append to first config
+        line.before = indent
+        config.push(line)
+        directiveLineFound = true
+      } else {
+        line.before = indent
+        config.push(line)
+      }
+    }
+
+    // separate from previous sections with an extra newline
+    if (config.length > 0 && this.length > 1) {
+      config[config.length - 1].after += '\n'
+    }
+
+    return config
+  }
+
+  /**
    * Stringify structured object into ssh config text
    * @param {SSHConfig} config
    * @returns {string}

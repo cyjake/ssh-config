@@ -319,4 +319,140 @@ describe('SSHConfig', function() {
       CertificateFile: ['/foo/bar', '/foo/bar2', '/foo/bar3']
     })
   })
+
+  it('.prepend lines', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host example
+        HostName example.com
+        User root
+        Port 22
+        IdentityFile /path/to/key
+    */}))
+
+    config.prepend({
+      Host: 'examplePrepend2.com',
+      User: 'pegg2',
+      IdentityFile: '~/.ssh/id_rsa'
+    })
+
+    const opts = config.compute('examplePrepend2.com')
+    assert(opts.User === 'pegg2')
+    assert.deepEqual(opts.IdentityFile, ['~/.ssh/id_rsa'])
+    assert.deepEqual(config.find({ Host: 'examplePrepend2.com' }), {
+      type: DIRECTIVE,
+      before: '',
+      after: '\n',
+      param: 'Host',
+      separator: ' ',
+      value: 'examplePrepend2.com',
+      config: new SSHConfig({
+        type: DIRECTIVE,
+        before: '  ',
+        after: '\n',
+        param: 'User',
+        separator: ' ',
+        value: 'pegg2'
+      },{
+        type: DIRECTIVE,
+        before: '  ',
+        after: '\n\n',
+        param: 'IdentityFile',
+        separator: ' ',
+        value: '~/.ssh/id_rsa'
+      })
+    })
+  })
+
+  it('.prepend with original identation recognized', function() {
+    const config = SSHConfig.parse(heredoc(function () {/*
+      Host example1
+        HostName example1.com
+        User simon
+        Port 1000
+        IdentityFile /path/to/key
+    */}).replace(/  /g, '\t'))
+
+    config.prepend({
+      Host: 'examplePrepend3.com',
+      User: 'paul2'
+    })
+
+    assert.deepEqual(config.find({ Host: 'examplePrepend3.com' }), {
+      type: DIRECTIVE,
+      before: '',
+      after: '\n',
+      param: 'Host',
+      separator: ' ',
+      value: 'examplePrepend3.com',
+      config: new SSHConfig({
+        type: DIRECTIVE,
+        before: '\t',
+        after: '\n\n',
+        param: 'User',
+        separator: ' ',
+        value: 'paul2'
+      })
+    })
+  })
+
+  it('.prepend with newline insertion', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Host test
+        HostName google.com*/}))
+
+    config.prepend({
+      Host: 'testPrepend2',
+      HostName: 'microsoft.com'
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host testPrepend2
+        HostName microsoft.com
+
+      Host test
+        HostName google.com*/}))
+  })
+
+  it('.prepend to empty config', function() {
+    const config = new SSHConfig()
+    config.prepend({
+      IdentityFile: '~/.ssh/id_rsa',
+      Host: 'prependTest',
+      HostName: 'example.com'
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      IdentityFile ~/.ssh/id_rsa
+
+      Host prependTest
+        HostName example.com
+    */}))
+  })
+
+  it('.prepend to empty config with new section', function() {
+    const config = new SSHConfig()
+    config.prepend({
+      Host: 'prependTest',
+      HostName: 'example.com',
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host prependTest
+        HostName example.com
+    */}))
+  })
+
+  it('.prepend to empty section config', function() {
+    const config = SSHConfig.parse('Host test')
+    config.prepend({
+      HostName: 'example.com',
+      User: 'brian'
+    })
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Host test
+        HostName example.com
+        User brian
+    */}))
+  })
 })
