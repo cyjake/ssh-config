@@ -7,6 +7,7 @@ const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|User)$/i
+const RE_INCLUDE_DIRECTIVE = /^(Include)$/i
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -157,7 +158,7 @@ class SSHConfig extends Array {
    * Prepend new section to existing ssh config.
    * @param {Object} opts
    */
-   prepend(opts) {
+   prepend(opts, belowIncludes = false) {
     let indent = '  '
 
     outer:
@@ -173,6 +174,21 @@ class SSHConfig extends Array {
     }
 
     let config = this
+    let i = 0
+
+    // insert below Include directives
+    if(belowIncludes) {
+      while(i < this.length && RE_INCLUDE_DIRECTIVE.test(this[i].param)) {
+        i += 1
+      }
+  
+      if(i >= this.length) { // Only Include in original config
+        this.append(opts)
+        return
+      }
+    }
+
+    // Prepend new section above first section below any Includes
     let directiveLineFound = false
 
     for (const param in opts) {
@@ -186,7 +202,7 @@ class SSHConfig extends Array {
       }
 
       if (RE_SECTION_DIRECTIVE.test(param)) {
-        config.unshift(line)
+        config.splice(i, 0, line)
         config = line.config = new SSHConfig()
         directiveLineFound = true
         continue

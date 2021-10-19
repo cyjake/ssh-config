@@ -461,7 +461,7 @@ describe('SSHConfig', function() {
       Host test
 
       Host test2
-        Hostname google.com*/}))
+        HostName google.com*/}))
     config.prepend({
       HostName: 'example.com',
       User: 'brian'
@@ -473,6 +473,45 @@ describe('SSHConfig', function() {
         User brian
       
       Host test2
-        Hostname google.com*/}))
+        HostName google.com*/}))
+  })
+
+  it('.prepend to with Include', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Include ~/.ssh/configs/*
+
+      Host test2
+        HostName google.com*/}))
+
+    config.prepend({
+      Host: 'example',
+      HostName: 'microsoft.com',
+    }, true)
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Include ~/.ssh/configs/*
+
+      Host example
+        HostName microsoft.com
+      
+      Host test2
+        HostName google.com*/}))
+  })
+
+  it('.prepend to with empty Include', function() {
+    const config = SSHConfig.parse(heredoc(function() {/*
+      Include ~/.ssh/configs/* */}))
+
+    config.prepend({
+      Host: 'example',
+      HostName: 'microsoft.com',
+    }, true)
+
+    assert.equal(config.toString(), heredoc(function() {/*
+      Include ~/.ssh/configs/*
+
+      Host example
+        HostName microsoft.com
+*/}))
   })
 })
