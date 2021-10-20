@@ -177,14 +177,13 @@ class SSHConfig extends Array {
     let i = 0
 
     // insert above known sections
-    if(beforeFirstSection) {
-      while(i < this.length && !RE_SECTION_DIRECTIVE.test(this[i].param)) {
+    if (beforeFirstSection) {
+      while (i < this.length && !RE_SECTION_DIRECTIVE.test(this[i].param)) {
         i += 1
       }
-  
-      if(i >= this.length) { // No sections in original config
-        this.append(opts)
-        return
+
+      if (i >= this.length) { // No sections in original config
+        return this.append(opts)
       }
     }
 
@@ -215,11 +214,11 @@ class SSHConfig extends Array {
         line.after += '\n'
       }
 
-      if(!sectionLineFound) {
+      if (!sectionLineFound) {
         config.splice(i, 0, line)
         i += 1
 
-        // Add an extra newline if a single line directive like Include 
+        // Add an extra newline if a single line directive like Include
         if (RE_SINGLE_LINE_DIRECTIVE.test(param)) {
           line.after += '\n'
         }

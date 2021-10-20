@@ -20,7 +20,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "mocha --exit",
-    "coveralls": "nyc mocha --exit && nyc report --reporter=text-lcov | coveralls"
+    "test:coverage": "nyc mocha --exit && nyc report --reporter=lcov"
   },
   "engine": {
     "node": ">= 10.0.0"
