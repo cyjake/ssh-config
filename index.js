@@ -7,6 +7,7 @@ const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|User)$/i
+const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -151,6 +152,85 @@ class SSHConfig extends Array {
     }
 
     return configWas
+  }
+
+  /**
+   * Prepend new section to existing ssh config.
+   * @param {Object} opts
+   */
+   prepend(opts, beforeFirstSection = false) {
+    let indent = '  '
+
+    outer:
+    for (const line of this) {
+      if (RE_SECTION_DIRECTIVE.test(line.param)) {
+        for (const subline of line.config) {
+          if (subline.before) {
+            indent = subline.before
+            break outer
+          }
+        }
+      }
+    }
+
+    let config = this
+    let i = 0
+
+    // insert above known sections
+    if(beforeFirstSection) {
+      while(i < this.length && !RE_SECTION_DIRECTIVE.test(this[i].param)) {
+        i += 1
+      }
+  
+      if(i >= this.length) { // No sections in original config
+        this.append(opts)
+        return
+      }
+    }
+
+    // Prepend new section above the first section
+    let sectionLineFound = false
+    let processedLines = 0
+
+    for (const param in opts) {
+      processedLines += 1
+      const line = {
+        type: DIRECTIVE,
+        param,
+        separator: ' ',
+        value: opts[param],
+        before: '',
+        after: '\n'
+      }
+
+      if (RE_SECTION_DIRECTIVE.test(param)) {
+        config.splice(i, 0, line)
+        config = line.config = new SSHConfig()
+        sectionLineFound = true
+        continue
+      }
+
+      // separate from previous sections with an extra newline
+      if (processedLines === Object.keys(opts).length) {
+        line.after += '\n'
+      }
+
+      if(!sectionLineFound) {
+        config.splice(i, 0, line)
+        i += 1
+
+        // Add an extra newline if a single line directive like Include 
+        if (RE_SINGLE_LINE_DIRECTIVE.test(param)) {
+          line.after += '\n'
+        }
+        continue
+      }
+
+      line.before = indent
+      config.push(line)
+    }
+
+    return config
   }
 
   /**
