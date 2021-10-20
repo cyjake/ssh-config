@@ -3,7 +3,8 @@
 [![NPM Downloads](https://img.shields.io/npm/dm/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
 [![NPM Version](http://img.shields.io/npm/v/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
 [![Build Status](https://travis-ci.org/cyjake/ssh-config.svg)](https://travis-ci.org/cyjake/ssh-config)
-[![Coverage Status](https://coveralls.io/repos/github/cyjake/ssh-config/badge.svg?branch=master)](https://coveralls.io/github/cyjake/ssh-config?branch=master)
+[![Node CI](https://github.com/cyjake/ssh-config/actions/workflows/nodejs.yml/badge.svg)](https://github.com/cyjake/ssh-config/actions/workflows/nodejs.yml)
+[![codecov](https://codecov.io/gh/cyjake/ssh-config/branch/master/graph/badge.svg?token=RMyTgcL8Kg)](https://codecov.io/gh/cyjake/ssh-config)
 
 ## Usage
 

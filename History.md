@@ -1,3 +1,16 @@
+4.1.0 / 2021-10-20
+==================
+
+## What's Changed
+* test: switching to github actions by @cyjake in https://github.com/cyjake/ssh-config/pull/44
+* feat: add prepend function to prepend options onto config by @tanhakabir in https://github.com/cyjake/ssh-config/pull/45
+* build: switch to codecov by @cyjake in https://github.com/cyjake/ssh-config/pull/46
+
+## New Contributors
+* @tanhakabir made her first contribution in https://github.com/cyjake/ssh-config/pull/45
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.0.6...v4.1.0
+
 4.0.6 / 2021-05-11
 ==================
 
