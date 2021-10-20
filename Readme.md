@@ -154,6 +154,62 @@ SSHConfig.stringify(config)
 //   User dinosaur
 ```
 
+### `.prepend` sections
+
+But appending options to the end of the config isn't very effective if your config is organizated per the recommendations of ssh_config(5) that the generic options are at at the end of the config, such as:
+
+```
+Host ness
+  HostName lochness.com
+  User dinosaur
+
+IdentityFile ~/.ssh/id_rsa
+```
+
+The config could get messy if you put new options after the line of `IdentityFile`. To work around this issue, it is recommended that `.prepend` should be used instead. For the example above, we can prepend new options at the beginning of the config:
+
+```js
+config.prepend({
+  Host: 'tahoe',
+  HostName 'tahoe.com',
+})
+```
+
+The result would be:
+
+```
+Host tahoe
+  HostName tahoe.com
+
+Host ness
+  HostName lochness.com
+  User dinosaur
+
+IdentityFile ~/.ssh/id_rsa
+```
+
+If there are generic options at the beginning of the config, and you'd like the prepended section put before the first existing section, please turn on the second argument of `.prepend`:
+
+```js
+config.prepend({
+  Host: 'tahoe',
+  HostName 'tahoe.com',
+}, true)
+```
+
+The result would be like:
+
+```
+IdentityFile ~/.ssh/id_rsa
+
+Host tahoe
+  HostName tahoe.com
+
+Host ness
+  HostName lochness.com
+  User dinosaur
+```
+
 ## References
 
 - [ssh_config(5)][ssh_config]

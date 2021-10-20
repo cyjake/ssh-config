@@ -9,7 +9,8 @@
   },
   "files": [
     "index.js",
-    "src"
+    "src",
+    "types"
   ],
   "devDependencies": {
     "eslint": "^7.17.0",
