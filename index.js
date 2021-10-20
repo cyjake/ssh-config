@@ -210,13 +210,6 @@ class SSHConfig extends Array {
         continue
       }
 
-      if(!sectionLineFound && RE_SINGLE_LINE_DIRECTIVE.test(param)) {
-        line.after += '\n'
-        config.splice(i, 0, line)
-        config = line.config = new SSHConfig()
-        continue
-      }
-
       // separate from previous sections with an extra newline
       if (processedLines === Object.keys(opts).length) {
         line.after += '\n'
@@ -225,6 +218,11 @@ class SSHConfig extends Array {
       if(!sectionLineFound) {
         config.splice(i, 0, line)
         i += 1
+
+        // Add an extra newline if a single line directive like Include 
+        if (RE_SINGLE_LINE_DIRECTIVE.test(param)) {
+          line.after += '\n'
+        }
         continue
       }
 
