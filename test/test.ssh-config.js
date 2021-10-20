@@ -426,7 +426,8 @@ describe('SSHConfig', function() {
 
       Host prependTest
         HostName example.com
-    */}))
+
+      */}))
   })
 
   it('.prepend to empty config with new section', function() {
@@ -439,7 +440,8 @@ describe('SSHConfig', function() {
     assert.equal(config.toString(), heredoc(function() {/*
       Host prependTest
         HostName example.com
-    */}))
+
+      */}))
   })
 
   it('.prepend to empty section config', function() {
@@ -450,10 +452,10 @@ describe('SSHConfig', function() {
     })
 
     assert.equal(config.toString(), heredoc(function() {/*
-      Host test
-        HostName example.com
-        User brian
-    */}))
+      HostName example.com
+      User brian
+
+      Host test*/}))
   })
 
   it('.prepend to empty section and existing section config', function() {
@@ -467,11 +469,13 @@ describe('SSHConfig', function() {
       User: 'brian'
     })
 
+    console.log(config.toString())
     assert.equal(config.toString(), heredoc(function() {/*
+      HostName example.com
+      User brian
+
       Host test
-        HostName example.com
-        User brian
-      
+
       Host test2
         HostName google.com*/}))
   })

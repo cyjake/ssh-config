@@ -7,7 +7,7 @@ const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
 const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|User)$/i
-const RE_INCLUDE_DIRECTIVE = /^(Include)$/i
+const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
 const DIRECTIVE = 1
 const COMMENT = 2
@@ -158,7 +158,7 @@ class SSHConfig extends Array {
    * Prepend new section to existing ssh config.
    * @param {Object} opts
    */
-   prepend(opts, belowIncludes = false) {
+   prepend(opts, beforeFirstSection = false) {
     let indent = '  '
 
     outer:
@@ -177,8 +177,8 @@ class SSHConfig extends Array {
     let i = 0
 
     // insert below Include directives
-    if(belowIncludes) {
-      while(i < this.length && RE_INCLUDE_DIRECTIVE.test(this[i].param)) {
+    if(beforeFirstSection) {
+      while(i < this.length && !RE_SECTION_DIRECTIVE.test(this[i].param)) {
         i += 1
       }
   
@@ -189,9 +189,11 @@ class SSHConfig extends Array {
     }
 
     // Prepend new section above first section below any Includes
-    let directiveLineFound = false
+    let sectionLineFound = false
+    let processedLines = 0
 
     for (const param in opts) {
+      processedLines += 1
       const line = {
         type: DIRECTIVE,
         param,
@@ -204,39 +206,31 @@ class SSHConfig extends Array {
       if (RE_SECTION_DIRECTIVE.test(param)) {
         config.splice(i, 0, line)
         config = line.config = new SSHConfig()
-        directiveLineFound = true
+        sectionLineFound = true
         continue
       }
 
-      if(!directiveLineFound && RE_QUOTE_DIRECTIVE.test(param)) {
+      if(!sectionLineFound && RE_SINGLE_LINE_DIRECTIVE.test(param)) {
         line.after += '\n'
-        config.push(line)
+        config.splice(i, 0, line)
         config = line.config = new SSHConfig()
-        directiveLineFound = true
         continue
       }
 
-      if(!directiveLineFound) {
-        // find the first config in the old config
-        const firstConfig = this.length > 0 ? this[0] : null
-        config = firstConfig && firstConfig.config || this
-
-        // remove extra newlines for sectioning to add fields instead
-        firstConfig.after = '\n'
-
-        // append to first config
-        line.before = indent
-        config.push(line)
-        directiveLineFound = true
-      } else {
-        line.before = indent
-        config.push(line)
+      // separate from previous sections with an extra newline
+      if (processedLines === Object.keys(opts).length) {
+        line.after += '\n'
       }
-    }
 
-    // separate from previous sections with an extra newline
-    if (config.length > 0 && this.length > 1) {
-      config[config.length - 1].after += '\n'
+      if(!sectionLineFound) {
+        // Add an extra newline at the end of prepended lines
+        config.splice(i, 0, line)
+        i += 1
+        continue
+      }
+
+      line.before = indent
+      config.push(line)
     }
 
     return config
