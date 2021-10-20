@@ -176,19 +176,19 @@ class SSHConfig extends Array {
     let config = this
     let i = 0
 
-    // insert below Include directives
+    // insert above known sections
     if(beforeFirstSection) {
       while(i < this.length && !RE_SECTION_DIRECTIVE.test(this[i].param)) {
         i += 1
       }
   
-      if(i >= this.length) { // Only Include in original config
+      if(i >= this.length) { // No sections in original config
         this.append(opts)
         return
       }
     }
 
-    // Prepend new section above first section below any Includes
+    // Prepend new section above the first section
     let sectionLineFound = false
     let processedLines = 0
 
@@ -223,7 +223,6 @@ class SSHConfig extends Array {
       }
 
       if(!sectionLineFound) {
-        // Add an extra newline at the end of prepended lines
         config.splice(i, 0, line)
         i += 1
         continue
