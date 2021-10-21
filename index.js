@@ -12,10 +12,6 @@ const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 const DIRECTIVE = 1
 const COMMENT = 2
 
-function compare(line, opts) {
-  return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
-}
-
 const MULTIPLE_VALUE_PROPS = [
   'IdentityFile',
   'LocalForward',
@@ -23,6 +19,24 @@ const MULTIPLE_VALUE_PROPS = [
   'DynamicForward',
   'CertificateFile'
 ]
+
+function compare(line, opts) {
+  return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
+}
+
+function getIndent(config) {
+  for (const line of config) {
+    if (RE_SECTION_DIRECTIVE.test(line.param)) {
+      for (const subline of line.config) {
+        if (subline.before) {
+          return subline.before
+        }
+      }
+    }
+  }
+
+  return '  '
+}
 
 class SSHConfig extends Array {
   /**
@@ -106,20 +120,7 @@ class SSHConfig extends Array {
    * @param {Object} opts
    */
   append(opts) {
-    let indent = '  '
-
-    outer:
-    for (const line of this) {
-      if (RE_SECTION_DIRECTIVE.test(line.param)) {
-        for (const subline of line.config) {
-          if (subline.before) {
-            indent = subline.before
-            break outer
-          }
-        }
-      }
-    }
-
+    const indent = getIndent(this)
     const lastEntry = this.length > 0 ? this[this.length - 1] : null
     let config = lastEntry && lastEntry.config || this
     let configWas = this
@@ -158,21 +159,8 @@ class SSHConfig extends Array {
    * Prepend new section to existing ssh config.
    * @param {Object} opts
    */
-   prepend(opts, beforeFirstSection = false) {
-    let indent = '  '
-
-    outer:
-    for (const line of this) {
-      if (RE_SECTION_DIRECTIVE.test(line.param)) {
-        for (const subline of line.config) {
-          if (subline.before) {
-            indent = subline.before
-            break outer
-          }
-        }
-      }
-    }
-
+  prepend(opts, beforeFirstSection = false) {
+    const indent = getIndent(this)
     let config = this
     let i = 0
 
