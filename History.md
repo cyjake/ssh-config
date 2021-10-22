@@ -1,3 +1,13 @@
+4.1.1 / 2021-10-21
+==================
+
+## What's Changed
+* docs: `.prepend` and type definitions by @cyjake in https://github.com/cyjake/ssh-config/pull/47
+* fix: improper parsing of ProxyCommand with quotation marks by @tanhakabir in https://github.com/cyjake/ssh-config/pull/48
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.0...v4.1.1
+
 4.1.0 / 2021-10-20
 ==================
 
