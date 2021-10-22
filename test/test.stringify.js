@@ -132,4 +132,17 @@ describe('stringify', function() {
         IdentityFile "C:\Users\John Doe\.ssh\id_rsa"
     */}))
   })
+
+  // https://github.com/microsoft/vscode-remote-release/issues/5562
+  it('.stringify ProxyCommand with spaces', function() {
+    const config = parse(heredoc(function() {/*
+      Host foo
+        ProxyCommand "C:\foo bar\baz.exe" "arg" "arg" "arg"
+    */}))
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host foo
+        ProxyCommand "C:\foo bar\baz.exe" arg arg arg
+    */}))
+  })
 })
