@@ -5,7 +5,7 @@ const glob = require('./src/glob')
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 

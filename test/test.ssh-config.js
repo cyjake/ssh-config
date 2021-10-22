@@ -36,7 +36,7 @@ describe('SSHConfig', function() {
       IdentityFile: [
         '~/.ssh/id_rsa'
       ],
-      ProxyCommand: 'ssh -q gateway -W %h:%p',
+      ProxyCommand: ['ssh', '-q', 'gateway', '-W', '%h:%p'],
       ServerAliveInterval: '80',
       User: 'nil',
       ForwardAgent: 'true'

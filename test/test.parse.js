@@ -139,7 +139,17 @@ describe('parse', function() {
   it('.parse unquoted values that contain double quotes', function() {
     const config = parse('ProxyCommand ssh -W "%h:%p" firewall.example.org')
     assert.equal(config[0].param, 'ProxyCommand')
-    assert.equal(config[0].value, 'ssh -W "%h:%p" firewall.example.org')
+    assert.deepEqual(config[0].value, ['ssh', '-W', '%h:%p', 'firewall.example.org'])
+  })
+
+  // https://github.com/microsoft/vscode-remote-release/issues/5562
+  it('.parse ProxyCommand with multiple args, some quoted', function() {
+    const config = parse(heredoc(function() {/*
+      Host foo
+        ProxyCommand "C:\foo bar\baz.exe" "arg" "arg" "arg"
+    */}))
+    assert.equal(config[0].config[0].param, 'ProxyCommand')
+    assert.deepEqual(config[0].config[0].value, ['C:\\foo bar\\baz.exe', 'arg', 'arg', 'arg'])
   })
 
   it('.parse open ended values', function() {
