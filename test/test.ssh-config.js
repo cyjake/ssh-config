@@ -469,7 +469,6 @@ describe('SSHConfig', function() {
       User: 'brian'
     })
 
-    console.log(config.toString())
     assert.equal(config.toString(), heredoc(function() {/*
       HostName example.com
       User brian
@@ -497,7 +496,7 @@ describe('SSHConfig', function() {
 
       Host example
         HostName microsoft.com
-      
+
       Host test2
         HostName google.com*/}))
   })
