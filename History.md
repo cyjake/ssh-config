@@ -1,3 +1,12 @@
+4.1.2 / 2022-01-20
+==================
+
+## What's Changed
+* docs: types field in package.json by @cyjake in https://github.com/cyjake/ssh-config/pull/50
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.1...v4.1.2
+
 4.1.1 / 2021-10-21
 ==================
 
