@@ -1,3 +1,12 @@
+4.1.3 / 2022-03-11
+==================
+
+## What's Changed
+* fix: IdentityAgent should be quoted if necessary by @cyjake in https://github.com/cyjake/ssh-config/pull/52
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.2...v4.1.3
+
 4.1.2 / 2022-01-20
 ==================
 
