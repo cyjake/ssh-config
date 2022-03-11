@@ -39,7 +39,6 @@ describe('stringify', function() {
     */}))
   })
 
-
   it('.stringify IdentityFile entries with double quotes', function() {
     const config = parse(heredoc(function() {/*
       Host example
@@ -53,6 +52,33 @@ describe('stringify', function() {
         HostName example.com
         User dan
         IdentityFile "/path to my/.ssh/id_rsa"
+    */}))
+  })
+
+  it('.stringify IndentityAgent entries with double quotes', function() {
+    const config = parse(heredoc(function() {/*
+      Host example
+        HostName example.com
+        IdentityAgent "~/Library/Group Containers"
+    */}))
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host example
+        HostName example.com
+        IdentityAgent "~/Library/Group Containers"
+    */}))
+  })
+
+  it('.stringify IndentityAgent entries with double quotes', function() {
+    const config = new SSHConfig()
+    config.append({
+      Host: 'example',
+      IdentityAgent: '~/Library/Group Containers',
+    })
+
+    assert.equal(stringify(config), heredoc(function() {/*
+      Host example
+        IdentityAgent "~/Library/Group Containers"
     */}))
   })
 
@@ -101,7 +127,7 @@ describe('stringify', function() {
         LocalForward 3000 127.0.0.1:3000
     */}))
 
-    config.append(  {
+    config.append({
       Host: 'bar',
       LocalForward: [
         '3128 127.0.0.1:3128',
