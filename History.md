@@ -1,3 +1,12 @@
+4.1.4 / 2022-04-02
+==================
+
+## What's Changed
+* fix: declaration of sshConfig.find() by @cyjake in https://github.com/cyjake/ssh-config/pull/55
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.3...v4.1.4
+
 4.1.3 / 2022-03-11
 ==================
 
