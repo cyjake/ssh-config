@@ -4,16 +4,16 @@ const assert = require('assert').strict || require('assert')
 const fs = require('fs')
 const heredoc = require('heredoc').strip
 const path = require('path')
-const SSHConfig = require('..')
+const SSHConfig = require('../..')
 const { parse, stringify } = SSHConfig
 
-function readFile(fpath) {
-  return fs.readFileSync(path.join(__dirname, fpath), 'utf-8')
-    .replace(/\r\n/g, '\n')
+function readFile(fname) {
+  const fpath = path.join(__dirname, '..', fname)
+  return fs.readFileSync(fpath, 'utf-8').replace(/\r\n/g, '\n')
 }
 
 describe('stringify', function() {
-  it('.stringify the parsed object back to string', function() {
+  it('.stringify the parsed object back to string', async function() {
     const fixture = readFile('fixture/config')
     const config = parse(fixture)
     assert.equal(fixture, stringify(config))

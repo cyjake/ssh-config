@@ -457,6 +457,10 @@ class SSHConfig extends Array {
         config.push(node)
         config = node.config = new SSHConfig()
       }
+      else if (node.type === DIRECTIVE && !node.param) {
+        // blank lines at file end
+        config[config.length - 1].after += node.before
+      }
       else {
         config.push(node)
       }

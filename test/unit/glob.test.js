@@ -2,7 +2,7 @@
 
 const assert = require('assert').strict || require('assert')
 
-const glob = require('../src/glob')
+const glob = require('../../src/glob')
 
 
 describe('glob', function() {

@@ -13,7 +13,7 @@ interface Directive {
 }
 
 interface Section extends Directive {
-  config: SSHConfig;
+  config: SSHConfig<Line>;
 }
 
 interface Comment {
@@ -21,21 +21,26 @@ interface Comment {
   content: string;
 }
 
-type Line = Directive | Comment;
+type Line = Section | Directive | Comment;
 
-export default class SSHConfig extends Array {
-  static parse(text: string): SSHConfig;
-  static stringify(config: SSHConfig): string;
+declare class SSHConfig<T> extends Array<T> {
+  static parse(text: string): SSHConfig<Line>;
+  static stringify(config: SSHConfig<Line>): string;
+
+  static DIRECTIVE: ELine.DIRECTIVE;
+  static COMMENT: ELine.COMMENT;
 
   toString(): string;
 
   compute(host: string): Record<string, string>;
 
-  find(predicate: (value: any, index: number, obj: any[]) => any);
+  find<T>(this: SSHConfig<T>, predicate: (line: T, index: number, config: T[]) => boolean): T;
   find(options: Record<string, string>): Line | Section;
 
   remove(options: Record<string, string>): Line | Section;
 
-  append(options: Record<string, string>): SSHConfig;
-  prepend(options: Record<string, string>): SSHConfig;
+  append(options: Record<string, string>): SSHConfig<Line>;
+  prepend(options: Record<string, string>): SSHConfig<Line>;
 }
+
+export default class extends SSHConfig<Line> {}
