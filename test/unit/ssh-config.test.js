@@ -5,17 +5,17 @@ const fs = require('fs')
 const path = require('path')
 const heredoc = require('heredoc').strip
 
-const SSHConfig = require('..')
+const SSHConfig = require('../..')
 
 const { DIRECTIVE } = SSHConfig
 
-function readFile(fpath) {
-  return fs.readFileSync(path.join(__dirname, fpath), 'utf-8')
-    .replace(/\r\n/g, '\n')
+function readFile(fname) {
+  const fpath = path.join(__dirname, '..', fname)
+  return fs.readFileSync(fpath, 'utf-8').replace(/\r\n/g, '\n')
 }
 
 describe('SSHConfig', function() {
-  it('.compute by Host', function() {
+  it('.compute by Host', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     const opts = config.compute('tahoe2')
 
@@ -91,18 +91,18 @@ describe('SSHConfig', function() {
     }
   })
 
-  it('.find with nothing shall yield error', function() {
+  it('.find with nothing shall yield error', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     assert.throws(function() { config.find() })
     assert.throws(function() { config.find({}) })
   })
 
-  it('.find shall return null if nothing were found', function() {
+  it('.find shall return null if nothing were found', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     assert(config.find({ Host: 'not.exist' }) == null)
   })
 
-  it('.find by Host', function() {
+  it('.find by Host', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
 
     assert.deepEqual(config.find({ Host: 'tahoe1' }), {
@@ -147,7 +147,7 @@ describe('SSHConfig', function() {
     })
   })
 
-  it('.remove by Host', function() {
+  it('.remove by Host', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     const length = config.length
 

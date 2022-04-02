@@ -5,17 +5,17 @@ const assert = require('assert').strict || require('assert')
 const fs = require('fs')
 const heredoc = require('heredoc').strip
 const path = require('path')
-const SSHConfig = require('..')
+const SSHConfig = require('../..')
 
 const { parse, COMMENT, DIRECTIVE } = SSHConfig
 
-function readFile(fpath) {
-  return fs.readFileSync(path.join(__dirname, fpath), 'utf-8')
-    .replace(/\r\n/g, '\n')
+function readFile(fname) {
+  const fpath = path.join(__dirname, '..', fname)
+  return fs.readFileSync(fpath, 'utf-8').replace(/\r\n/g, '\n')
 }
 
 describe('parse', function() {
-  it('.parse simple config', function() {
+  it('.parse simple config', async function() {
     const config = parse(readFile('fixture/config'))
 
     assert.equal(config[0].param, 'ControlMaster')
@@ -220,6 +220,31 @@ describe('parse', function() {
         value: 'example.com',
         before: '\t',
         after: ''
+      })
+    })
+  })
+
+  it('.parse config with extra blank lines', function() {
+    const config = parse(`
+      IdentityFile ~/.ssh/id_rsa
+
+      Host ness
+        HostName lochness.com
+    `)
+    assert.deepEqual(config.find({ Host: 'ness' }), {
+      type: 1,
+      param: 'Host',
+      separator: ' ',
+      value: 'ness',
+      before: '      ',
+      after: '\n',
+      config: new SSHConfig({
+        type: 1,
+        param: 'HostName',
+        separator: ' ',
+        value: 'lochness.com',
+        before: '        ',
+        after: '\n    '
       })
     })
   })
