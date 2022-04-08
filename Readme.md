@@ -121,7 +121,7 @@ config.remove({ Host: 'example1' })
 Since the parsed config is a sub class of Array, you can append new sections with methods like `.push` or `.concat`.
 
 ```js
-config.push(SSHConfig.parse(`
+config.push(...SSHConfig.parse(`
 Host ness
   HostName lochness.com
   User dinosaur
