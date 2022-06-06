@@ -4,6 +4,8 @@
 ## What's Changed
 * docs: config.push(...config)
 
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.4...v4.1.5
+
 4.1.4 / 2022-04-02
 ==================
 
