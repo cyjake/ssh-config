@@ -162,6 +162,18 @@ describe('SSHConfig', function() {
     assert.throws(function() { config.remove({}) })
   })
 
+  it('.remove by function', async function() {
+    const config = SSHConfig.parse(readFile('fixture/config'))
+    const length = config.length
+    
+    config.remove((line) => line.param && line.param.toLowerCase() === 'Host'.toLowerCase() && line.value === 'tahoe2')
+    assert(config.find({ Host: 'tahoe2' }) == null)
+    assert(config.length === length - 1)
+
+    assert.throws(function() { config.remove() })
+    assert.throws(function() { config.remove({}) })
+  })
+
   it('.append lines', function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host example
