@@ -1,3 +1,14 @@
+4.1.6 / 2022-06-30
+==================
+
+## What's Changed
+* Allow to remove section by function by @colas31 in https://github.com/cyjake/ssh-config/pull/57
+
+## New Contributors
+* @colas31 made their first contribution in https://github.com/cyjake/ssh-config/pull/57
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.5...v4.1.6
+
 4.1.5 / 2022-06-05
 ==================
 

@@ -1,7 +1,7 @@
 {
   "name": "ssh-config",
   "description": "SSH config parser and stringifier",
-  "version": "4.1.5",
+  "version": "4.1.6",
   "author": "Chen Yangjian (https://www.cyj.me)",
   "repository": {
     "type": "git",
