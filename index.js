@@ -79,7 +79,7 @@ class SSHConfig extends Array {
   }
 
   /**
-   * find section by Host or Match
+   * find section by Host / Match or function
    */
   find(opts = {}) {
     if (typeof opts === 'function') return super.find(opts)
@@ -92,17 +92,22 @@ class SSHConfig extends Array {
   }
 
   /**
-   * Remove section
+   * Remove section by Host / Match or function
    */
   remove(opts = {}) {
-    if (!(opts && ('Host' in opts || 'Match' in opts))) {
-      throw new Error('Can only remove by Host or Match')
-    }
+    let index;
 
-    const index = typeof opts === 'function'
-      ? super.findIndex(opts)
-      : super.findIndex(line => compare(line, opts))
+    if (typeof opts === 'function') {
+      index = super.findIndex(opts);
 
+    } else if (!(opts && ('Host' in opts || 'Match' in opts))) {
+      throw new Error('Can only remove by Host or Match');
+
+    } else {
+      index = super.findIndex(line => compare(line, opts));
+
+    } 
+    
     if (index >= 0) return this.splice(index, 1)
   }
 

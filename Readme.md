@@ -108,12 +108,14 @@ config.find({ Host: 'example1' })
 config.find(line => line.param == 'Host' && line.value == 'example1')
 ```
 
-### `.remove` sections by Host or other criteria
+### `.remove` sections by Host / Match or function
 
 To remove sections, we can pass the section to `.remove(opts)`.
 
 ```js
 config.remove({ Host: 'example1' })
+// or the ES2015 Array.prototype.find
+config.remove(line => line.param == 'Host' && line.value == 'example1')
 ```
 
 ### `.append` sections
