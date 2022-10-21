@@ -1,6 +1,6 @@
 'use strict'
 
-const assert = require('assert').strict || require('assert')
+const assert = require('assert').strict
 const fs = require('fs')
 const path = require('path')
 const heredoc = require('heredoc').strip
@@ -43,7 +43,7 @@ describe('SSHConfig', function() {
     })
   })
 
-  it('.compute by Host with globbing', function() {
+  it('.compute by Host with globbing', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host example*
         HostName example.com
@@ -57,7 +57,7 @@ describe('SSHConfig', function() {
     })
   })
 
-  it('.compute by Host with multiple patterns', function() {
+  it('.compute by Host with multiple patterns', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host foo "*.bar" "baz ham"
         HostName example.com
@@ -78,7 +78,7 @@ describe('SSHConfig', function() {
    * - https://github.com/microsoft/vscode-remote-release/issues/612
    * - https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Proxies_and_Jump_Hosts#Recursively_Chaining_an_Arbitrary_Number_of_Hosts
    */
-  it('.compute by Host with chaining hosts', function() {
+  it('.compute by Host with chaining hosts', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host *+*
         ProxyCommand ssh -W $(echo %h | sed 's/^.*+//;s/^\([^:]*$\)/\1:22/') $(echo %h | sed 's/+[^+]*$//;s/\([^+%%]*\)%%\([^+]*\)$/\2 -l \1/;s/:\([^:+]*\)$/ -p \1/')
@@ -89,6 +89,32 @@ describe('SSHConfig', function() {
       assert(result)
       assert(result.hasOwnProperty('ProxyCommand'))
     }
+  })
+
+  it('.compute by Match host', async function() {
+    const config = SSHConfig.parse(`
+      Match host tahoe1
+        HostName tahoe.com
+        
+      Match host tahoe2
+        HostName tahoe.org
+    `)
+    const result = config.compute('tahoe1')
+    assert.ok(result)
+    assert.equal(result.HostName, 'tahoe.com')
+  })
+
+  it('compute by Match exec', async function() {
+    const config = SSHConfig.parse(`
+      Match exec "return 1" host tahoe1
+        HostName tahoe.com
+      
+      Match exec "return 0" host tahoe1
+        HostName tahoe.local
+    `)
+    const result = config.compute('tahoe1')
+    assert.ok(result)
+    assert.equal(result.HostName, 'tahoe.local')
   })
 
   it('.find with nothing shall yield error', async function() {
@@ -174,7 +200,7 @@ describe('SSHConfig', function() {
     assert.throws(function() { config.remove({}) })
   })
 
-  it('.append lines', function() {
+  it('.append lines', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host example
         HostName example.com
@@ -309,7 +335,7 @@ describe('SSHConfig', function() {
     */}))
   })
 
-  it('.compute with properties with multiple values', function() {
+  it('.compute with properties with multiple values', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host myHost
         HostName example.com
@@ -332,7 +358,7 @@ describe('SSHConfig', function() {
     })
   })
 
-  it('.prepend lines', function() {
+  it('.prepend lines', async function() {
     const config = SSHConfig.parse(heredoc(function() {/*
       Host example
         HostName example.com

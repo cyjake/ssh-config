@@ -248,4 +248,22 @@ describe('parse', function() {
       })
     })
   })
+
+  it('.parse match criteria', function() {
+    const config = parse(`
+      Match exec "/Users/me/onsubnet --not 192.168.1." host docker
+        ProxyJump exthost
+        Hostname 192.168.1.10
+        User user1
+        Port 22
+
+      Host docker
+        Hostname docker
+    `)
+    const match = config.find(({ param }) => param === 'Match')
+    assert.deepEqual(match.value, {
+      exec: '/Users/me/onsubnet --not 192.168.1.',
+      host: 'docker',
+    })
+  })
 })

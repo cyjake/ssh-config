@@ -1,11 +1,12 @@
 'use strict'
 
 const glob = require('./src/glob')
+const { spawnSync } = require('child_process')
 
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|Match)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
@@ -38,39 +39,59 @@ function getIndent(config) {
   return '  '
 }
 
+function match(criteria, params) {
+  for (const key in criteria) {
+    const criterion = criteria[key]
+    const keyword = key.toLowerCase()
+    if (keyword === 'exec') {
+      const command = `function main {
+        ${criterion}
+      }
+      main`
+      const { status } = spawnSync(command, { shell: true })
+      if (status != 0) return false
+    } else if (!glob(criterion, params[capitalize(keyword)])) {
+      return false
+    }
+  }
+  return true
+}
+
+function capitalize(str) {
+  if (typeof str !== 'string') return str
+  return str[0].toUpperCase() + str.slice(1)
+}
+
 class SSHConfig extends Array {
   /**
    * Query ssh config by host.
    *
    * @return {Object} The applied options of current Host
    */
-  compute(host) {
+  compute(params) {
+    if (typeof params === 'string') params = { Host: params }
     const obj = {}
     const setProperty = (name, value) => {
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
         const list = obj[name] || (obj[name] = [])
         list.push(value)
-      }
-      else if (obj[name] == null) {
+      } else if (obj[name] == null) {
         obj[name] = value
       }
     }
 
     for (const line of this) {
       if (line.type !== DIRECTIVE) continue
-      if (line.param === 'Host') {
-        if (glob(line.value, host)) {
-          setProperty(line.param, line.value)
-
-          line.config
-            .filter(line => line.type === DIRECTIVE)
-            .forEach(line => setProperty(line.param, line.value))
-        }
-      }
-      else if (line.param === 'Match') {
-        // TODO
-      }
-      else {
+      if (line.param === 'Host' && glob(line.value, params.Host)) {
+        setProperty(line.param, line.value)
+        line.config
+          .filter(line => line.type === DIRECTIVE)
+          .forEach(line => setProperty(line.param, line.value))
+      } else if (line.param === 'Match' && match(line.value, params)) {
+        line.config
+          .filter(line => line.type === DIRECTIVE)
+          .forEach(line => setProperty(line.param, line.value))
+      } else {
         setProperty(line.param, line.value)
       }
     }
@@ -95,17 +116,14 @@ class SSHConfig extends Array {
    * Remove section by Host / Match or function
    */
   remove(opts = {}) {
-    let index;
+    let index
 
     if (typeof opts === 'function') {
-      index = super.findIndex(opts);
-
+      index = super.findIndex(opts)
     } else if (!(opts && ('Host' in opts || 'Match' in opts))) {
-      throw new Error('Can only remove by Host or Match');
-
+      throw new Error('Can only remove by Host or Match')
     } else {
-      index = super.findIndex(line => compare(line, opts));
-
+      index = super.findIndex(line => compare(line, opts))
     } 
     
     if (index >= 0) return this.splice(index, 1)
@@ -234,6 +252,11 @@ class SSHConfig extends Array {
     let str = ''
 
     function formatValue(value, quoted) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const result = []
+        for (const key in value) result.push(key, value[key])
+        value = result
+      }
       if (Array.isArray(value)) {
         return value.map(chunk => formatValue(chunk, RE_SPACE.test(chunk))).join(' ')
       }
@@ -440,6 +463,15 @@ class SSHConfig extends Array {
         value: multiple ? values() : value()
       }
       if (!result.quoted) delete result.quoted
+      if (/^Match$/i.test(param)) {
+        const criteria = {}
+        for (let i = 0; i < result.value.length; i += 2) {
+          const keyword = result.value[i]
+          const value = result.value[ i + 1]
+          criteria[keyword] = value
+        }
+        result.value = criteria
+      }
       return result
     }
 
