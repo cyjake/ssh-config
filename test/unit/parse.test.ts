@@ -1,11 +1,7 @@
-'use strict'
-
-// strict mode is not available until v9.9.0
-const assert = require('assert').strict || require('assert')
-const fs = require('fs')
-const heredoc = require('heredoc').strip
-const path = require('path')
-const SSHConfig = require('../..')
+import { strict as assert } from 'assert'
+import fs from 'fs'
+import path from 'path'
+import SSHConfig from '../..'
 
 const { parse, COMMENT, DIRECTIVE } = SSHConfig
 
@@ -18,6 +14,7 @@ describe('parse', function() {
   it('.parse simple config', async function() {
     const config = parse(readFile('fixture/config'))
 
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'ControlMaster')
     assert.equal(config[0].value, 'auto')
     assert.equal(config.length, 7)
@@ -48,30 +45,30 @@ describe('parse', function() {
   })
 
   it('.parse config with parameters and values separated by =', function() {
-    const config = parse(heredoc(function() {/*
+    const config = parse(`
       Host=tahoe4
         HostName=tahoe4.com
         User=keanu
-    */}))
+    `)
 
     assert.deepEqual(config[0], {
       type: DIRECTIVE,
-      before: '',
+      before: '\n      ',
       after: '\n',
       param: 'Host',
       separator: '=',
       value: 'tahoe4',
       config: new SSHConfig({
         type: DIRECTIVE,
-        before: '  ',
+        before: '        ',
         after: '\n',
         param: 'HostName',
         separator: '=',
         value: 'tahoe4.com'
       },{
         type: DIRECTIVE,
-        before: '  ',
-        after: '\n',
+        before: '        ',
+        after: '\n    ',
         param: 'User',
         separator: '=',
         value: 'keanu'
@@ -80,7 +77,7 @@ describe('parse', function() {
   })
 
   it('.parse comments', function() {
-    const config = parse(heredoc(function() {/*
+    const config = parse(`
       # I'd like to travel to lake tahoe.
       Host tahoe1
         HostName tahoe1.com
@@ -89,65 +86,78 @@ describe('parse', function() {
       # I just need another vocation.
       Host *
         IdentityFile ~/.ssh/ids/whosyourdaddy
-    */}))
+    `)
 
     assert.equal(config[0].type, COMMENT)
     assert.equal(config[0].content, "# I'd like to travel to lake tahoe.")
 
     // The comments goes with sections. So the structure is not the way it seems.
+    assert.equal(config[1].type, DIRECTIVE)
+    assert.ok('config' in config[1])
     assert.equal(config[1].config[1].type, COMMENT)
     assert.equal(config[1].config[1].content, '# or whatever place it is.')
   })
 
   it('.parse multiple IdentityFile', function() {
-    const config = parse(heredoc(function() {/*
+    const config = parse(`
       # Fallback Identify Files
       IdentityFile ~/.ssh/ids/%h/%r/id_rsa
       IdentityFile ~/.ssh/ids/%h/id_rsa
       IdentityFile ~/.ssh/id_rsa
-    */}))
+    `)
 
+    assert.equal(config[1].type, DIRECTIVE)
     assert.equal(config[1].param, 'IdentityFile')
     assert.equal(config[1].value, '~/.ssh/ids/%h/%r/id_rsa')
 
+    assert.equal(config[2].type, DIRECTIVE)
     assert.equal(config[2].param, 'IdentityFile')
     assert.equal(config[2].value, '~/.ssh/ids/%h/id_rsa')
 
+    assert.equal(config[3].type, DIRECTIVE)
     assert.equal(config[3].param, 'IdentityFile')
     assert.equal(config[3].value, '~/.ssh/id_rsa')
   })
 
   it('.parse IdentityFile with spaces', function() {
-    const config = parse(heredoc(function() {/*
-      IdentityFile C:\Users\John Doe\.ssh\id_rsa
-      IdentityFile "C:\Users\John Doe\.ssh\id_rsa"
-    */}))
+    const config = parse(`
+      IdentityFile C:\\Users\\John Doe\\.ssh\\id_rsa
+      IdentityFile "C:\\Users\\John Doe\\.ssh\\id_rsa"
+    `)
 
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'IdentityFile')
     assert.equal(config[0].value, 'C:\\Users\\John Doe\\.ssh\\id_rsa')
 
+    assert.equal(config[1].type, DIRECTIVE)
     assert.equal(config[1].param, 'IdentityFile')
     assert.equal(config[1].value, 'C:\\Users\\John Doe\\.ssh\\id_rsa')
   })
 
   it('.parse quoted values with escaped double quotes', function() {
     const config = parse('IdentityFile "C:\\Users\\John\\" Doe\\.ssh\\id_rsa"')
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'IdentityFile')
     assert.equal(config[0].value, 'C:\\Users\\John" Doe\\.ssh\\id_rsa')
   })
 
   it('.parse unquoted values that contain double quotes', function() {
     const config = parse('ProxyCommand ssh -W "%h:%p" firewall.example.org')
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'ProxyCommand')
     assert.deepEqual(config[0].value, ['ssh', '-W', '%h:%p', 'firewall.example.org'])
   })
 
   // https://github.com/microsoft/vscode-remote-release/issues/5562
   it('.parse ProxyCommand with multiple args, some quoted', function() {
-    const config = parse(heredoc(function() {/*
+    const config = parse(`
       Host foo
-        ProxyCommand "C:\foo bar\baz.exe" "arg" "arg" "arg"
-    */}))
+        ProxyCommand "C:\\foo bar\\baz.exe" "arg" "arg" "arg"
+    `)
+
+    assert.equal(config[0].type, DIRECTIVE)
+    assert.ok('config' in config[0])
+    assert.equal(config[0].config[0].type, DIRECTIVE)
     assert.equal(config[0].config[0].param, 'ProxyCommand')
     assert.deepEqual(config[0].config[0].value, ['C:\\foo bar\\baz.exe', 'arg', 'arg', 'arg'])
   })
@@ -160,6 +170,7 @@ describe('parse', function() {
 
   it('.parse Host with quoted hosts that contain spaces', function() {
     const config = parse('Host "foo bar"')
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'Host')
     assert.equal(config[0].value, 'foo bar')
   })
@@ -167,6 +178,7 @@ describe('parse', function() {
   it('.parse Host with multiple patterns', function() {
     const config = parse('Host foo "!*.bar"  "baz ham"   "foo\\"bar"')
 
+    assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'Host')
     assert.deepEqual(config[0].value, [
       'foo',
@@ -179,6 +191,7 @@ describe('parse', function() {
   it('.parse Host with multiple random patterns', function() {
     const config = parse('Host me local    wi*ldcard?  thisVM "two words"')
 
+    assert.equal(config[0].type, DIRECTIVE)
     assert.deepEqual(config[0].value, [
       'me',
       'local',
@@ -190,12 +203,13 @@ describe('parse', function() {
 
   // #32
   it('.parse Host with trailing spaces', function() {
-    const config = parse(heredoc(function() {/*
+    const config = parse(`
       Host penlv
         HostName penlv-devbox
         User penlv
-    */}).replace('penlv\n', 'penlv \n'))
+    `.replace('penlv\n', 'penlv \n'))
 
+    assert.equal(config[0].type, DIRECTIVE)
     assert.deepEqual(config[0].value, 'penlv')
   })
 
@@ -260,8 +274,10 @@ describe('parse', function() {
       Host docker
         Hostname docker
     `)
-    const match = config.find(({ param }) => param === 'Match')
-    assert.deepEqual(match.value, {
+    const match = config.find(line => line.type === DIRECTIVE && line.param === 'Match')
+    assert.ok(match)
+    assert.ok('conditions' in match)
+    assert.deepEqual(match.conditions, {
       exec: '/Users/me/onsubnet --not 192.168.1.',
       host: 'docker',
     })

@@ -1,9 +1,5 @@
-'use strict'
-
-const assert = require('assert').strict || require('assert')
-
-const glob = require('../../src/glob')
-
+import { strict as assert } from 'assert'
+import glob from '../../src/glob'
 
 describe('glob', function() {
   it('glob asterisk mark', function() {

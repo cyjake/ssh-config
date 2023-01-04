@@ -1,10 +1,6 @@
-'use strict'
+import SSHConfig from '..'
 
-const heredoc = require('heredoc').strip
-const SSHConfig = require('./index')
-
-
-const config = SSHConfig.parse(heredoc(function() {/*
+const config = SSHConfig.parse(`
   Host example
     HostName example.com
     User root
@@ -16,13 +12,13 @@ const config = SSHConfig.parse(heredoc(function() {/*
     User simon
     Port 1000
     IdentityFile /path/to/key
-*/}))
+`)
 
 config.append({
   Host: 'example2',
   HostName: 'example2.com',
   User: 'simon',
-  Port: 1000,
+  Port: '1000',
   IdentityFile: '/path/to/other/key'
 })
 

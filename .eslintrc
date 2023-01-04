@@ -1,20 +1,28 @@
 {
+  "ignorePatterns": ["*.js"],
   "parserOptions": {
-    "ecmaVersion": 2020
+    "ecmaVersion": 2020,
+    "sourceType": "module"
   },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint/eslint-plugin"
+  ],
   "env": {
     "node": true,
     "es6": true
   },
   "rules": {
-    "curly": [2, "multi-line"],
-    "consistent-return": 0,
-    "quotes": [2, "single", { "avoidEscape": true }],
-    "semi": [2, "never"],
-    "strict": [2, "global"],
-    "no-underscore-dangle": 0,
-    "no-use-before-define": [2, "nofunc"],
-    "no-unused-vars": [2, { "vars": "all", "args": "none" }],
-    "no-undef": 2
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-use-before-define": ["error", "nofunc"],
+    "curly": ["error", "multi-line"],
+    "consistent-return": "off",
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "semi": ["error", "never"],
+    "strict": ["error", "global"],
+    "no-underscore-dangle": "off",
+    "no-use-before-define": "off",
+    "no-unused-vars": "off",
+    "no-undef": "error"
   }
 }
