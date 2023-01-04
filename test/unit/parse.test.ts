@@ -201,7 +201,7 @@ describe('parse', function() {
     ])
   })
 
-  // #32
+  // https://github.com/cyjake/ssh-config/issues/32
   it('.parse Host with trailing spaces', function() {
     const config = parse(`
       Host penlv
@@ -263,6 +263,7 @@ describe('parse', function() {
     })
   })
 
+  // https://github.com/cyjake/ssh-config/issues/58
   it('.parse match criteria', function() {
     const config = parse(`
       Match exec "/Users/me/onsubnet --not 192.168.1." host docker
@@ -276,8 +277,8 @@ describe('parse', function() {
     `)
     const match = config.find(line => line.type === DIRECTIVE && line.param === 'Match')
     assert.ok(match)
-    assert.ok('conditions' in match)
-    assert.deepEqual(match.conditions, {
+    assert.ok('criteria' in match)
+    assert.deepEqual(match.criteria, {
       exec: '/Users/me/onsubnet --not 192.168.1.',
       host: 'docker',
     })

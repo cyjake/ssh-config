@@ -1,3 +1,13 @@
+4.2.0 / 2023-01-04
+==================
+
+## What's Changed
+* feat: parse Match criteria into an object by @cyjake in https://github.com/cyjake/ssh-config/pull/59
+* refactor: migrate to typescript by @cyjake in https://github.com/cyjake/ssh-config/pull/60
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.1.6...v4.2.0
+
 4.1.6 / 2022-06-30
 ==================
 

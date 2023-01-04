@@ -33,7 +33,7 @@ interface Section extends Directive {
 }
 
 interface Match extends Section {
-  conditions: Record<string, string | string[]>
+  criteria: Record<string, string | string[]>
 }
 
 interface Comment {
@@ -126,7 +126,7 @@ class SSHConfig extends Array<Line> {
             setProperty(subline.param, subline.value)
           }
         }
-      } else if (line.param === 'Match' && 'conditions' in line && match(line.conditions, params)) {
+      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, params)) {
         for (const subline of (line as Section).config) {
           if (subline.type === LineType.DIRECTIVE) {
             setProperty(subline.param, subline.value)
@@ -452,7 +452,7 @@ export function parse(text: string): SSHConfig {
         const value = result.value[ i + 1]
         criteria[keyword] = value
       }
-      (result as Match).conditions = criteria
+      (result as Match).criteria = criteria
     }
     return result
   }
