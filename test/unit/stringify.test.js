@@ -171,4 +171,15 @@ describe('stringify', function() {
         ProxyCommand "C:\foo bar\baz.exe" arg arg arg
     */}))
   })
+
+  it('.stringify Match with criteria', function() {
+    const config = parse(`
+      Match host foo exec "return 0"
+        HostName localhost
+    `)
+    assert.equal(stringify(config), `
+      Match host foo exec "return 0"
+        HostName localhost
+    `)
+  })
 })
