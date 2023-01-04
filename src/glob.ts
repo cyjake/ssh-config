@@ -1,20 +1,19 @@
-'use strict'
 
-function escapeChars(str, chars) {
+function escapeChars(text: string, chars: string) {
   for (let char of chars) {
-    str = str.replace(new RegExp('\\' + char, 'g'), '\\' + char)
+    text = text.replace(new RegExp('\\' + char, 'g'), '\\' + char)
   }
 
-  return str
+  return text
 }
 
-function match(pattern, str) {
+function match(pattern: string, text: string) {
   pattern = escapeChars(pattern, '\\()[]{}.+^$|')
   pattern = pattern
     .replace(/\*/g, '.*')
     .replace(/\?/g, '.?')
 
-  return new RegExp('^(?:' + pattern + ')$').test(str)
+  return new RegExp('^(?:' + pattern + ')$').test(text)
 }
 
 /**
@@ -24,7 +23,7 @@ function match(pattern, str) {
  * @param {string|string[]} patternList
  * @param {string} str
  */
-function glob(patternList, str) {
+function glob(patternList: string | string[], text: string) {
   const patterns = Array.isArray(patternList) ? patternList : patternList.split(/,/)
 
   // > If a negated entry is matched, then the Host entry is ignored, regardless of whether any other patterns on the line match.
@@ -32,9 +31,9 @@ function glob(patternList, str) {
   for (const pattern of patterns) {
     const negate = pattern[0] == '!'
 
-    if (negate && match(pattern.slice(1), str)) {
+    if (negate && match(pattern.slice(1), text)) {
       return false
-    } else if (match(pattern, str)) {
+    } else if (match(pattern, text)) {
       // wait until all of the pattern match results because there might be a negated pattern
       result = true
     }
@@ -43,4 +42,4 @@ function glob(patternList, str) {
   return result
 }
 
-module.exports = glob
+export default glob
