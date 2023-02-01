@@ -1,3 +1,12 @@
+4.2.1 / 2023-02-01
+==================
+
+## What's Changed
+* fix: not matched sections should not present in compute result by @cyjake in https://github.com/cyjake/ssh-config/pull/63
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.2.0...v4.2.1
+
 4.2.0 / 2023-01-04
 ==================
 
