@@ -132,7 +132,7 @@ class SSHConfig extends Array<Line> {
             setProperty(subline.param, subline.value)
           }
         }
-      } else {
+      } else if (line.param !== 'Host' && line.param !== 'Match') {
         setProperty(line.param, line.value)
       }
     }
