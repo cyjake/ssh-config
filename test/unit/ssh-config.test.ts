@@ -98,6 +98,7 @@ describe('SSHConfig', function() {
     const result = config.compute('tahoe1')
     assert.ok(result)
     assert.equal(result.HostName, 'tahoe.com')
+    assert.equal(result.Match, undefined)
   })
 
   it('compute by Match exec', async function() {
