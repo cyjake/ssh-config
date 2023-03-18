@@ -1,4 +1,4 @@
-import SSHConfig from '..'
+import SSHConfig from '../src'
 
 const config = SSHConfig.parse(`
   Host example
