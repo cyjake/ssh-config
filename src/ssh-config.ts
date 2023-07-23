@@ -49,6 +49,11 @@ interface FindOptions {
   Host?: string;
 }
 
+interface MatchOptions {
+  Host: string;
+  User?: string;
+}
+
 const MULTIPLE_VALUE_PROPS = [
   'IdentityFile',
   'LocalForward',
@@ -75,12 +80,12 @@ function getIndent(config: SSHConfig) {
   return '  '
 }
 
-function capitalize(str) {
+function capitalize(str: string) {
   if (typeof str !== 'string') return str
   return str[0].toUpperCase() + str.slice(1)
 }
 
-function match(criteria, params) {
+function match(criteria: Match['criteria'], params: MatchOptions) {
   for (const key in criteria) {
     const criterion = criteria[key]
     const keyword = key.toLowerCase()
@@ -105,7 +110,16 @@ class SSHConfig extends Array<Line> {
   /**
    * Query SSH config by host.
    */
-  compute(host: string): Record<string, string | string[]> {
+  public compute(host: string): Record<string, string | string[]>;
+
+  /**
+   * Query SSH config by host and user.
+   */
+  public compute(opts: MatchOptions): Record<string, string | string[]>;
+
+  public compute(params: string | MatchOptions): Record<string, string | string[]> {
+    if (typeof params === 'string') params = { Host: params }
+
     const obj = {}
     const setProperty = (name, value) => {
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
@@ -118,14 +132,14 @@ class SSHConfig extends Array<Line> {
 
     for (const line of this) {
       if (line.type !== LineType.DIRECTIVE) continue
-      if (line.param === 'Host' && glob(line.value, host)) {
+      if (line.param === 'Host' && glob(line.value, params.Host)) {
         setProperty(line.param, line.value)
         for (const subline of (line as Section).config) {
           if (subline.type === LineType.DIRECTIVE) {
             setProperty(subline.param, subline.value)
           }
         }
-      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, { Host: host })) {
+      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, params)) {
         for (const subline of (line as Section).config) {
           if (subline.type === LineType.DIRECTIVE) {
             setProperty(subline.param, subline.value)
