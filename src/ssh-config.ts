@@ -99,14 +99,13 @@ function match(criteria, params) {
 }
 
 class SSHConfig extends Array<Line> {
-  static DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
-  static COMMENT: LineType.COMMENT = LineType.COMMENT
+  static readonly DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
+  static readonly COMMENT: LineType.COMMENT = LineType.COMMENT
 
   /**
-   * Query ssh config by host.
+   * Query SSH config by host.
    */
-  compute(params): Record<string, string | string[]> {
-    if (typeof params === 'string') params = { Host: params }
+  compute(host: string): Record<string, string | string[]> {
     const obj = {}
     const setProperty = (name, value) => {
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
@@ -119,14 +118,14 @@ class SSHConfig extends Array<Line> {
 
     for (const line of this) {
       if (line.type !== LineType.DIRECTIVE) continue
-      if (line.param === 'Host' && glob(line.value, params.Host)) {
+      if (line.param === 'Host' && glob(line.value, host)) {
         setProperty(line.param, line.value)
         for (const subline of (line as Section).config) {
           if (subline.type === LineType.DIRECTIVE) {
             setProperty(subline.param, subline.value)
           }
         }
-      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, params)) {
+      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, { Host: host })) {
         for (const subline of (line as Section).config) {
           if (subline.type === LineType.DIRECTIVE) {
             setProperty(subline.param, subline.value)
@@ -141,7 +140,7 @@ class SSHConfig extends Array<Line> {
   }
 
   /**
-   * find section by Host / Match or function
+   * Find section by Host / Match or function.
    */
   find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     if (typeof opts === 'function') return super.find(opts)
@@ -154,7 +153,7 @@ class SSHConfig extends Array<Line> {
   }
 
   /**
-   * Remove section by Host / Match or function
+   * Remove section by Host / Match or function.
    */
   remove(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     let index: number
@@ -175,8 +174,7 @@ class SSHConfig extends Array<Line> {
   }
 
   /**
-   * Append new section to existing ssh config.
-   * @param {Object} opts
+   * Append new section to existing SSH config.
    */
   append(opts: Record<string, string | string[]>) {
     const indent = getIndent(this)
@@ -219,8 +217,7 @@ class SSHConfig extends Array<Line> {
   }
 
   /**
-   * Prepend new section to existing ssh config.
-   * @param {Object} opts
+   * Prepend new section to existing SSH config.
    */
   prepend(opts: Record<string, string | string[]>, beforeFirstSection = false) {
     const indent = getIndent(this)
@@ -287,7 +284,7 @@ class SSHConfig extends Array<Line> {
 }
 
 /**
- * Parse ssh config text into structured object.
+ * Parse SSH config text into structured object.
  */
 export function parse(text: string): SSHConfig {
   let i = 0
@@ -449,7 +446,7 @@ export function parse(text: string): SSHConfig {
       const criteria = {}
       for (let i = 0; i < result.value.length; i += 2) {
         const keyword = result.value[i]
-        const value = result.value[ i + 1]
+        const value = result.value[i + 1]
         criteria[keyword] = value
       }
       (result as Match).criteria = criteria
@@ -489,7 +486,7 @@ export function parse(text: string): SSHConfig {
 }
 
 /**
- * Stringify structured object into ssh config text
+ * Stringify structured object into SSH config text.
  */
 export function stringify(config: SSHConfig): string {
   let str = ''
