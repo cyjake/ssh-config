@@ -9,7 +9,9 @@
   },
   "files": [
     "index.js",
-    "src"
+    "index.d.ts",
+    "src/*.js",
+    "src/*.d.ts"
   ],
   "devDependencies": {
     "@types/mocha": "^9.1.0",
