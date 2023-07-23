@@ -495,11 +495,6 @@ export function stringify(config: SSHConfig): string {
   let str = ''
 
   function formatValue(value: string | string[] | Record<string, any>, quoted: boolean) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      const result: string[] = []
-      for (const key in value) result.push(key, value[key])
-      value = result
-    }
     if (Array.isArray(value)) {
       return value.map(chunk => formatValue(chunk, RE_SPACE.test(chunk))).join(' ')
     }

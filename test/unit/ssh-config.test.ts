@@ -101,7 +101,7 @@ describe('SSHConfig', function() {
     assert.equal(result.Match, undefined)
   })
 
-  it('compute by Match exec', async function() {
+  it('.compute by Match exec', async function() {
     const config = SSHConfig.parse(`
       Match exec "return 1" host tahoe1
         HostName tahoe.com
@@ -112,6 +112,23 @@ describe('SSHConfig', function() {
     const result = config.compute('tahoe1')
     assert.ok(result)
     assert.equal(result.HostName, 'tahoe.local')
+  })
+
+  it('.compute by Match host and user', async function() {
+    const config = SSHConfig.parse(`
+      Match host tahoe1 user foo
+        HostName tahoe.com
+
+      Match host tahoe1 user bar
+        # comment
+        HostName tahoe.org
+
+      IdentityFIle /path/to/key
+    `)
+    const result = config.compute({ Host: 'tahoe1', User: 'bar' })
+    assert.ok(result)
+    assert.equal(result.HostName, 'tahoe.org')
+    assert.equal(result.Match, undefined)
   })
 
   it('.find with nothing shall yield error', async function() {
