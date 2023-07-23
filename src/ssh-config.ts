@@ -153,10 +153,20 @@ class SSHConfig extends Array<Line> {
     return obj
   }
 
+
   /**
-   * Find section by Host / Match or function.
+   * Find by Host or Match.
    */
-  find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
+  public find(opts: FindOptions): Line | undefined;
+
+  /**
+   * Find by search function.
+   * @param predicate Function to check against each line; should return a truthy value when a
+   * matching line is given.
+   */
+  public find(predicate: (line: Line, index: number, config: Line[]) => unknown): Line | undefined;
+
+  public find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     if (typeof opts === 'function') return super.find(opts)
 
     if (!(opts && ('Host' in opts || 'Match' in opts))) {
@@ -166,10 +176,20 @@ class SSHConfig extends Array<Line> {
     return super.find(line => compare(line, opts))
   }
 
+
   /**
-   * Remove section by Host / Match or function.
+   * Remove section by Host or Match.
    */
-  remove(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
+  public remove(opts: FindOptions): Line[] | undefined;
+
+  /**
+   * Remove section by search function.
+   * @param predicate Function to check against each line; should return a truthy value when a
+   * matching line is given.
+   */
+  public remove(predicate: (line: Line, index: number, config: Line[]) => unknown): Line[] | undefined;
+
+  public remove(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     let index: number
 
     if (typeof opts === 'function') {
@@ -183,14 +203,14 @@ class SSHConfig extends Array<Line> {
     if (index >= 0) return this.splice(index, 1)
   }
 
-  toString(): string {
+  public toString(): string {
     return stringify(this)
   }
 
   /**
    * Append new section to existing SSH config.
    */
-  append(opts: Record<string, string | string[]>) {
+  public append(opts: Record<string, string | string[]>): SSHConfig {
     const indent = getIndent(this)
     const lastEntry = this.length > 0 ? this[this.length - 1] : null
     let config = lastEntry && (lastEntry as Section).config || this
@@ -233,7 +253,7 @@ class SSHConfig extends Array<Line> {
   /**
    * Prepend new section to existing SSH config.
    */
-  prepend(opts: Record<string, string | string[]>, beforeFirstSection = false) {
+  public prepend(opts: Record<string, string | string[]>, beforeFirstSection = false): SSHConfig {
     const indent = getIndent(this)
     let config: SSHConfig = this
     let i = 0
