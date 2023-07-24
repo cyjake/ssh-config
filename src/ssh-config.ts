@@ -49,6 +49,11 @@ interface FindOptions {
   Host?: string;
 }
 
+interface MatchOptions {
+  Host: string;
+  User?: string;
+}
+
 const MULTIPLE_VALUE_PROPS = [
   'IdentityFile',
   'LocalForward',
@@ -75,12 +80,12 @@ function getIndent(config: SSHConfig) {
   return '  '
 }
 
-function capitalize(str) {
+function capitalize(str: string) {
   if (typeof str !== 'string') return str
   return str[0].toUpperCase() + str.slice(1)
 }
 
-function match(criteria, params) {
+function match(criteria: Match['criteria'], params: MatchOptions) {
   for (const key in criteria) {
     const criterion = criteria[key]
     const keyword = key.toLowerCase()
@@ -99,14 +104,22 @@ function match(criteria, params) {
 }
 
 class SSHConfig extends Array<Line> {
-  static DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
-  static COMMENT: LineType.COMMENT = LineType.COMMENT
+  static readonly DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
+  static readonly COMMENT: LineType.COMMENT = LineType.COMMENT
 
   /**
-   * Query ssh config by host.
+   * Query SSH config by host.
    */
-  compute(params): Record<string, string | string[]> {
+  public compute(host: string): Record<string, string | string[]>;
+
+  /**
+   * Query SSH config by host and user.
+   */
+  public compute(opts: MatchOptions): Record<string, string | string[]>;
+
+  public compute(params: string | MatchOptions): Record<string, string | string[]> {
     if (typeof params === 'string') params = { Host: params }
+
     const obj = {}
     const setProperty = (name, value) => {
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
@@ -140,10 +153,20 @@ class SSHConfig extends Array<Line> {
     return obj
   }
 
+
   /**
-   * find section by Host / Match or function
+   * Find by Host or Match.
    */
-  find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
+  public find(opts: FindOptions): Line | undefined;
+
+  /**
+   * Find by search function.
+   * @param predicate Function to check against each line; should return a truthy value when a
+   * matching line is given.
+   */
+  public find(predicate: (line: Line, index: number, config: Line[]) => unknown): Line | undefined;
+
+  public find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     if (typeof opts === 'function') return super.find(opts)
 
     if (!(opts && ('Host' in opts || 'Match' in opts))) {
@@ -153,10 +176,20 @@ class SSHConfig extends Array<Line> {
     return super.find(line => compare(line, opts))
   }
 
+
   /**
-   * Remove section by Host / Match or function
+   * Remove section by Host or Match.
    */
-  remove(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
+  public remove(opts: FindOptions): Line[] | undefined;
+
+  /**
+   * Remove section by search function.
+   * @param predicate Function to check against each line; should return a truthy value when a
+   * matching line is given.
+   */
+  public remove(predicate: (line: Line, index: number, config: Line[]) => unknown): Line[] | undefined;
+
+  public remove(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     let index: number
 
     if (typeof opts === 'function') {
@@ -170,15 +203,14 @@ class SSHConfig extends Array<Line> {
     if (index >= 0) return this.splice(index, 1)
   }
 
-  toString(): string {
+  public toString(): string {
     return stringify(this)
   }
 
   /**
-   * Append new section to existing ssh config.
-   * @param {Object} opts
+   * Append new section to existing SSH config.
    */
-  append(opts: Record<string, string | string[]>) {
+  public append(opts: Record<string, string | string[]>): SSHConfig {
     const indent = getIndent(this)
     const lastEntry = this.length > 0 ? this[this.length - 1] : null
     let config = lastEntry && (lastEntry as Section).config || this
@@ -219,10 +251,9 @@ class SSHConfig extends Array<Line> {
   }
 
   /**
-   * Prepend new section to existing ssh config.
-   * @param {Object} opts
+   * Prepend new section to existing SSH config.
    */
-  prepend(opts: Record<string, string | string[]>, beforeFirstSection = false) {
+  public prepend(opts: Record<string, string | string[]>, beforeFirstSection = false): SSHConfig {
     const indent = getIndent(this)
     let config: SSHConfig = this
     let i = 0
@@ -287,7 +318,7 @@ class SSHConfig extends Array<Line> {
 }
 
 /**
- * Parse ssh config text into structured object.
+ * Parse SSH config text into structured object.
  */
 export function parse(text: string): SSHConfig {
   let i = 0
@@ -449,7 +480,7 @@ export function parse(text: string): SSHConfig {
       const criteria = {}
       for (let i = 0; i < result.value.length; i += 2) {
         const keyword = result.value[i]
-        const value = result.value[ i + 1]
+        const value = result.value[i + 1]
         criteria[keyword] = value
       }
       (result as Match).criteria = criteria
@@ -489,7 +520,7 @@ export function parse(text: string): SSHConfig {
 }
 
 /**
- * Stringify structured object into ssh config text
+ * Stringify structured object into SSH config text.
  */
 export function stringify(config: SSHConfig): string {
   let str = ''
