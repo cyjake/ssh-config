@@ -477,11 +477,31 @@ export function parse(text: string): SSHConfig {
     }
     if (!result.quoted) delete result.quoted
     if (/^Match$/i.test(param)) {
-      const criteria = {}
-      for (let i = 0; i < result.value.length; i += 2) {
+      const criteria: Match['criteria'] = {}
+
+      if (typeof result.value === "string") {
+        result.value = [result.value]
+      }
+
+      let i = 0
+      while (i < result.value.length) {
         const keyword = result.value[i]
-        const value = result.value[i + 1]
-        criteria[keyword] = value
+
+        switch (keyword.toLowerCase()) {
+          case "all":
+          case "canonical":
+          case "final":
+            criteria[keyword] = []
+            i += 1
+            break
+          default:
+            if (i + 1 >= result.value.length) {
+              throw new Error(`Missing value for match criteria ${keyword}`)
+            }
+            criteria[keyword] = result.value[i + 1]
+            i += 2
+            break
+        }
       }
       (result as Match).criteria = criteria
     }
