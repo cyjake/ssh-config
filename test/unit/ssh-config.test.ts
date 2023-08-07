@@ -131,6 +131,16 @@ describe('SSHConfig', function() {
     assert.equal(result.Match, undefined)
   })
 
+  it('.compute by explicit user', async function() {
+    const config = SSHConfig.parse(`
+      User wrong
+    `)
+    const result = config.compute({ Host: 'tahoe1', User: 'bar' })
+    assert.ok(result)
+    assert.equal(result.User, 'bar')
+  })
+
+
   it('.find with nothing shall yield error', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     assert.throws(function() { config.find({}) })
