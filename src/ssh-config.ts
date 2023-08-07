@@ -509,7 +509,11 @@ export function parse(text: string): SSHConfig {
     }
     else if (node.type === LineType.DIRECTIVE && !node.param) {
       // blank lines at file end
-      config[config.length - 1].after += node.before
+      if (config.length === 0) {
+        configWas[configWas.length - 1].after += node.before
+      } else {
+        config[config.length - 1].after += node.before
+      }
     }
     else {
       config.push(node)
