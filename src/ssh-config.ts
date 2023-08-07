@@ -130,6 +130,10 @@ class SSHConfig extends Array<Line> {
       }
     }
 
+    if (opts.User !== undefined) {
+      setProperty("User", opts.User)
+    }
+
     for (const line of this) {
       if (line.type !== LineType.DIRECTIVE) continue
       if (line.param === 'Host' && glob(line.value, params.Host)) {
