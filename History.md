@@ -1,3 +1,17 @@
+4.3.0 / 2023-08-08
+==================
+
+## What's Changed
+* test: .compute({ Host, User }) by @cyjake in https://github.com/cyjake/ssh-config/pull/67
+* Improve TypeScript by @matthew-e-brown in https://github.com/cyjake/ssh-config/pull/66
+* Improve support for obscure ssh_config(5) rules by @BenjaminGrayNp1 in https://github.com/cyjake/ssh-config/pull/68
+
+## New Contributors
+* @matthew-e-brown made their first contribution in https://github.com/cyjake/ssh-config/pull/66
+* @BenjaminGrayNp1 made their first contribution in https://github.com/cyjake/ssh-config/pull/68
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.2.1...v4.3.0
+
 4.2.1 / 2023-02-01
 ==================
 
