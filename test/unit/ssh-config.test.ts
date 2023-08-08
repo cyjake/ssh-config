@@ -131,6 +131,49 @@ describe('SSHConfig', function() {
     assert.equal(result.Match, undefined)
   })
 
+  it('.compute by explicit user', async function() {
+    const config = SSHConfig.parse(`
+      User wrong
+    `)
+    const result = config.compute({ Host: 'tahoe1', User: 'bar' })
+    assert.ok(result)
+    assert.equal(result.User, 'bar')
+  })
+
+  it('.compute by Match host uses HostName', async function() {
+    const config = SSHConfig.parse(`
+      Host tahoe
+        HostName tahoe.com
+
+      # Host does not use HostName until the second pass
+      Host *.com
+        ProxyJump wrong.proxy.com
+
+      Match host *.com
+        ProxyJump proxy.com
+    `)
+    const result = config.compute({ Host: 'tahoe' })
+    assert.ok(result)
+    assert.equal(result.HostName, 'tahoe.com')
+    assert.equal(result.ProxyJump, 'proxy.com')
+  })
+
+  it('.compute with Match final does second pass with HostName', async function() {
+    const config = SSHConfig.parse(`
+      Match final
+
+      Host tahoe
+        HostName tahoe.com
+
+      Host *.com
+        ProxyJump proxy.com
+    `)
+    const result = config.compute({ Host: 'tahoe' })
+    assert.ok(result)
+    assert.equal(result.HostName, 'tahoe.com')
+    assert.equal(result.ProxyJump, 'proxy.com')
+  })
+
   it('.find with nothing shall yield error', async function() {
     const config = SSHConfig.parse(readFile('fixture/config'))
     assert.throws(function() { config.find({}) })

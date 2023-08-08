@@ -1,6 +1,7 @@
 
 import glob from './glob'
 import { spawnSync } from 'child_process'
+import os from 'os'
 
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
@@ -54,6 +55,20 @@ interface MatchOptions {
   User?: string;
 }
 
+interface MatchParams {
+  Host: string;
+  HostName: string;
+  OriginalHost: string;
+  User: string;
+  LocalUser: string;
+}
+
+interface ComputeContext {
+  params: MatchParams;
+  doFinalPass: boolean;
+  inFinalPass: boolean;
+}
+
 const MULTIPLE_VALUE_PROPS = [
   'IdentityFile',
   'LocalForward',
@@ -80,23 +95,38 @@ function getIndent(config: SSHConfig) {
   return '  '
 }
 
-function capitalize(str: string) {
-  if (typeof str !== 'string') return str
-  return str[0].toUpperCase() + str.slice(1)
-}
+function match(criteria: Match['criteria'], context: ComputeContext): boolean {
+  const testCriterion = (key: string, criterion: string | string[]) => {
+    switch (key.toLowerCase()) {
+      case "all":
+        return true
+      case "final":
+        if (context.inFinalPass) {
+          return true
+        }
+        context.doFinalPass = true
+        return false
+      case "exec":
+        const command = `function main {
+          ${criterion}
+        }
+        main`
+        return spawnSync(command, { shell: true }).status === 0
+      case "host":
+        return glob(criterion, context.params.HostName)
+      case "originalhost":
+        return glob(criterion, context.params.OriginalHost)
+      case "user":
+        return glob(criterion, context.params.User)
+      case "localuser":
+        return glob(criterion, context.params.LocalUser)
+    }
+  }
 
-function match(criteria: Match['criteria'], params: MatchOptions) {
   for (const key in criteria) {
     const criterion = criteria[key]
-    const keyword = key.toLowerCase()
-    if (keyword === 'exec') {
-      const command = `function main {
-        ${criterion}
-      }
-      main`
-      const { status } = spawnSync(command, { shell: true })
-      if (status != 0) return false
-    } else if (!glob(criterion, params[capitalize(keyword)])) {
+
+    if (!testCriterion(key, criterion)) {
       return false
     }
   }
@@ -117,37 +147,70 @@ class SSHConfig extends Array<Line> {
    */
   public compute(opts: MatchOptions): Record<string, string | string[]>;
 
-  public compute(params: string | MatchOptions): Record<string, string | string[]> {
-    if (typeof params === 'string') params = { Host: params }
+  public compute(opts: string | MatchOptions): Record<string, string | string[]> {
+    if (typeof opts === 'string') opts = { Host: opts }
+
+    const context: ComputeContext = {
+      params: {
+        Host: opts.Host,
+        HostName: opts.Host,
+        OriginalHost: opts.Host,
+        User: os.userInfo().username,
+        LocalUser: os.userInfo().username,
+      },
+      inFinalPass: false,
+      doFinalPass: false,
+    }
 
     const obj = {}
-    const setProperty = (name, value) => {
+    const setProperty = (name: string, value) => {
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
         const list = obj[name] || (obj[name] = [])
         list.push(value)
       } else if (obj[name] == null) {
+        if (name === "HostName") {
+          context.params.HostName = value
+        } else if (name === "User") {
+          context.params.User = value
+        }
+
         obj[name] = value
       }
     }
 
-    for (const line of this) {
-      if (line.type !== LineType.DIRECTIVE) continue
-      if (line.param === 'Host' && glob(line.value, params.Host)) {
-        setProperty(line.param, line.value)
-        for (const subline of (line as Section).config) {
-          if (subline.type === LineType.DIRECTIVE) {
-            setProperty(subline.param, subline.value)
+    if (opts.User !== undefined) {
+      setProperty("User", opts.User)
+    }
+
+    const doPass = () => {
+      for (const line of this) {
+        if (line.type !== LineType.DIRECTIVE) continue
+        if (line.param === 'Host' && glob(line.value, context.params.Host)) {
+          setProperty(line.param, line.value)
+          for (const subline of (line as Section).config) {
+            if (subline.type === LineType.DIRECTIVE) {
+              setProperty(subline.param, subline.value)
+            }
           }
-        }
-      } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, params)) {
-        for (const subline of (line as Section).config) {
-          if (subline.type === LineType.DIRECTIVE) {
-            setProperty(subline.param, subline.value)
+        } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, context)) {
+          for (const subline of (line as Section).config) {
+            if (subline.type === LineType.DIRECTIVE) {
+              setProperty(subline.param, subline.value)
+            }
           }
+        } else if (line.param !== 'Host' && line.param !== 'Match') {
+          setProperty(line.param, line.value)
         }
-      } else if (line.param !== 'Host' && line.param !== 'Match') {
-        setProperty(line.param, line.value)
       }
+    }
+
+    doPass()
+
+    if (context.doFinalPass) {
+      context.inFinalPass = true
+      context.params.Host = context.params.HostName
+      
+      doPass()
     }
 
     return obj
@@ -477,11 +540,31 @@ export function parse(text: string): SSHConfig {
     }
     if (!result.quoted) delete result.quoted
     if (/^Match$/i.test(param)) {
-      const criteria = {}
-      for (let i = 0; i < result.value.length; i += 2) {
+      const criteria: Match['criteria'] = {}
+
+      if (typeof result.value === "string") {
+        result.value = [result.value]
+      }
+
+      let i = 0
+      while (i < result.value.length) {
         const keyword = result.value[i]
-        const value = result.value[i + 1]
-        criteria[keyword] = value
+
+        switch (keyword.toLowerCase()) {
+          case "all":
+          case "canonical":
+          case "final":
+            criteria[keyword] = []
+            i += 1
+            break
+          default:
+            if (i + 1 >= result.value.length) {
+              throw new Error(`Missing value for match criteria ${keyword}`)
+            }
+            criteria[keyword] = result.value[i + 1]
+            i += 2
+            break
+        }
       }
       (result as Match).criteria = criteria
     }
@@ -509,7 +592,11 @@ export function parse(text: string): SSHConfig {
     }
     else if (node.type === LineType.DIRECTIVE && !node.param) {
       // blank lines at file end
-      config[config.length - 1].after += node.before
+      if (config.length === 0) {
+        configWas[configWas.length - 1].after += node.before
+      } else {
+        config[config.length - 1].after += node.before
+      }
     }
     else {
       config.push(node)

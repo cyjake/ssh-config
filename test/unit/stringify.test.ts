@@ -171,11 +171,11 @@ describe('stringify', function() {
 
   it('.stringify Match with criteria', function() {
     const config = parse(`
-      Match host foo exec "return 0"
+      Match host foo final exec "return 0"
         HostName localhost
     `)
     assert.equal(stringify(config), `
-      Match host foo exec "return 0"
+      Match host foo final exec "return 0"
         HostName localhost
     `)
   })

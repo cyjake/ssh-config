@@ -263,10 +263,24 @@ describe('parse', function() {
     })
   })
 
+  it('.parse standalone match criteria', function() {
+    const config = parse(`
+      Match all canonical final
+    `)
+    const match = config.find(line => line.type === DIRECTIVE && line.param === 'Match')
+    assert.ok(match)
+    assert.ok('criteria' in match)
+    assert.deepEqual(match.criteria, {
+      all: [],
+      canonical: [],
+      final: [],
+    })
+  })
+
   // https://github.com/cyjake/ssh-config/issues/58
   it('.parse match criteria', function() {
     const config = parse(`
-      Match exec "/Users/me/onsubnet --not 192.168.1." host docker
+      Match exec "/Users/me/onsubnet --not 192.168.1." final host docker
         ProxyJump exthost
         Hostname 192.168.1.10
         User user1
@@ -281,6 +295,7 @@ describe('parse', function() {
     assert.deepEqual(match.criteria, {
       exec: '/Users/me/onsubnet --not 192.168.1.',
       host: 'docker',
+      final: [],
     })
   })
 })
