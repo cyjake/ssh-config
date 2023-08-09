@@ -10,16 +10,16 @@ const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|User
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
-enum LineType {
+export enum LineType {
   DIRECTIVE = 1,
   COMMENT = 2,
 }
 
-type Separator = ' ' | '=' | '\t';
+export type Separator = ' ' | '=' | '\t';
 
 type Space = ' ' | '\t' | '\n';
 
-interface Directive {
+export interface Directive {
   type: LineType.DIRECTIVE;
   before: string;
   after: string;
@@ -29,28 +29,28 @@ interface Directive {
   quoted?: boolean;
 }
 
-interface Section extends Directive {
+export interface Section extends Directive {
   config: SSHConfig;
 }
 
-interface Match extends Section {
+export interface Match extends Section {
   criteria: Record<string, string | string[]>
 }
 
-interface Comment {
+export interface Comment {
   type: LineType.COMMENT;
   before: string;
   after: string;
   content: string;
 }
 
-type Line = Match | Section | Directive | Comment;
+export type Line = Match | Section | Directive | Comment;
 
-interface FindOptions {
+export interface FindOptions {
   Host?: string;
 }
 
-interface MatchOptions {
+export interface MatchOptions {
   Host: string;
   User?: string;
 }
@@ -133,9 +133,23 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
   return true
 }
 
-class SSHConfig extends Array<Line> {
+export default class SSHConfig extends Array<Line> {
   static readonly DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
   static readonly COMMENT: LineType.COMMENT = LineType.COMMENT
+
+  /**
+   * Parse SSH config text into structured object.
+   */
+  public static parse(text: string): SSHConfig {
+    return parse(text)
+  }
+
+  /**
+   * Stringify structured object into SSH config text.
+   */
+  public static stringify(config: SSHConfig): string {
+    return stringify(config)
+  }
 
   /**
    * Query SSH config by host.
@@ -653,5 +667,3 @@ export function stringify(config: SSHConfig): string {
 
   return str
 }
-
-export default Object.assign(SSHConfig, { parse, stringify })
