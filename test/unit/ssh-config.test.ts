@@ -87,6 +87,23 @@ describe('SSHConfig', function() {
     }
   })
 
+  it('.compute By Host with canonical domains', async () => {
+    const config = SSHConfig.parse(`
+      Host www.cyj.me
+          ServerAliveInterval 60
+          ServerAliveCountMax 2
+
+      Host www
+        User matthew
+        CanonicalizeHostName yes
+        CanonicalDomains cyj.notfound cyj.me
+    `)
+
+    const result = config.compute('www')
+    assert.ok(result)
+    assert.equal(result.ServerAliveCountMax, '2')
+  })
+
   it('.compute by Match host', async function() {
     const config = SSHConfig.parse(`
       Match host tahoe1
