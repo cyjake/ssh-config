@@ -6,7 +6,7 @@ import os from 'os'
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|Match)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|Match|CanonicalDomains)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
@@ -98,27 +98,27 @@ function getIndent(config: SSHConfig) {
 function match(criteria: Match['criteria'], context: ComputeContext): boolean {
   const testCriterion = (key: string, criterion: string | string[]) => {
     switch (key.toLowerCase()) {
-      case "all":
+      case 'all':
         return true
-      case "final":
+      case 'final':
         if (context.inFinalPass) {
           return true
         }
         context.doFinalPass = true
         return false
-      case "exec":
+      case 'exec':
         const command = `function main {
           ${criterion}
         }
         main`
         return spawnSync(command, { shell: true }).status === 0
-      case "host":
+      case 'host':
         return glob(criterion, context.params.HostName)
-      case "originalhost":
+      case 'originalhost':
         return glob(criterion, context.params.OriginalHost)
-      case "user":
+      case 'user':
         return glob(criterion, context.params.User)
-      case "localuser":
+      case 'localuser':
         return glob(criterion, context.params.LocalUser)
     }
   }
@@ -182,9 +182,9 @@ export default class SSHConfig extends Array<Line> {
         const list = obj[name] || (obj[name] = [])
         list.push(value)
       } else if (obj[name] == null) {
-        if (name === "HostName") {
+        if (name === 'HostName') {
           context.params.HostName = value
-        } else if (name === "User") {
+        } else if (name === 'User') {
           context.params.User = value
         }
 
@@ -193,17 +193,38 @@ export default class SSHConfig extends Array<Line> {
     }
 
     if (opts.User !== undefined) {
-      setProperty("User", opts.User)
+      setProperty('User', opts.User)
     }
 
     const doPass = () => {
       for (const line of this) {
         if (line.type !== LineType.DIRECTIVE) continue
         if (line.param === 'Host' && glob(line.value, context.params.Host)) {
+          let canonicalizeHostName = false
+          let canonicalDomains: string[] = []
           setProperty(line.param, line.value)
           for (const subline of (line as Section).config) {
             if (subline.type === LineType.DIRECTIVE) {
               setProperty(subline.param, subline.value)
+              if (/^CanonicalizeHostName$/i.test(subline.param) && subline.value === 'yes') {
+                canonicalizeHostName = true
+              }
+              if (/^CanonicalDomains$/i.test(subline.param) && Array.isArray(subline.value)) {
+                canonicalDomains = subline.value
+              }
+            }
+          }
+          console.log(canonicalizeHostName, canonicalDomains)
+          if (canonicalDomains.length > 0 && canonicalizeHostName) {
+            for (const domain of canonicalDomains) {
+              const host = `${line.value}.${domain}`
+              const { stdout } = spawnSync('nslookup', [host])
+              if (!/server can't find/.test(stdout.toString())) {
+                context.params.Host = host
+                setProperty('Host', host)
+                doPass()
+                break
+              }
             }
           }
         } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, context)) {
@@ -223,7 +244,7 @@ export default class SSHConfig extends Array<Line> {
     if (context.doFinalPass) {
       context.inFinalPass = true
       context.params.Host = context.params.HostName
-      
+
       doPass()
     }
 
@@ -556,7 +577,7 @@ export function parse(text: string): SSHConfig {
     if (/^Match$/i.test(param)) {
       const criteria: Match['criteria'] = {}
 
-      if (typeof result.value === "string") {
+      if (typeof result.value === 'string') {
         result.value = [result.value]
       }
 
@@ -565,9 +586,9 @@ export function parse(text: string): SSHConfig {
         const keyword = result.value[i]
 
         switch (keyword.toLowerCase()) {
-          case "all":
-          case "canonical":
-          case "final":
+          case 'all':
+          case 'canonical':
+          case 'final':
             criteria[keyword] = []
             i += 1
             break
