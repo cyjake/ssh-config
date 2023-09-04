@@ -1,3 +1,13 @@
+4.4.0 / 2023-09-04
+==================
+
+## What's Changed
+* Export public interface by @BenjaminGrayNp1 in https://github.com/cyjake/ssh-config/pull/70
+* fix: do another pass if host canonicalization is enabled by @cyjake in https://github.com/cyjake/ssh-config/pull/71
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.3.0...v4.4.0
+
 4.3.0 / 2023-08-08
 ==================
 
