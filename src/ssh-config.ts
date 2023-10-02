@@ -214,7 +214,7 @@ export default class SSHConfig extends Array<Line> {
               }
             }
           }
-          console.log(canonicalizeHostName, canonicalDomains)
+          
           if (canonicalDomains.length > 0 && canonicalizeHostName) {
             for (const domain of canonicalDomains) {
               const host = `${line.value}.${domain}`
