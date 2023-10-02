@@ -1,3 +1,14 @@
+4.4.1 / 2023-10-02
+==================
+
+## What's Changed
+* remove console.log statement by @khaledez in https://github.com/cyjake/ssh-config/pull/72
+
+## New Contributors
+* @khaledez made their first contribution in https://github.com/cyjake/ssh-config/pull/72
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.4.0...v4.4.1
+
 4.4.0 / 2023-09-04
 ==================
 
