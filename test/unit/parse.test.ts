@@ -298,4 +298,26 @@ describe('parse', function() {
       final: [],
     })
   })
+
+  it('.parse match with comments', function() {
+    const config = parse(`
+      # CLOUDFLARE SETUP https://URL_REDACTED
+      Match all # CLOUDFLARE SETUP
+        Include /Users/mtovino/.ssh/cloudflare/config # CLOUDFLARE SETUP
+    `)
+    const match = config.find(line => line.type === DIRECTIVE && line.param === 'Match')
+    assert.ok(match)
+    assert.ok('criteria' in match)
+    assert.deepEqual(match.criteria, {
+      all: [],
+    })
+    assert.deepEqual(match.config.find(entry => 'param' in entry && entry.param === 'Include'), {
+      after: '',
+      before: '        ',
+      param: 'Include',
+      separator: ' ',
+      type: 1,
+      value: '/Users/mtovino/.ssh/cloudflare/config',
+    })
+  })
 })
