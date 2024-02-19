@@ -541,7 +541,7 @@ export function parse(text: string): SSHConfig {
       else if (quoted) {
         val += chr
       }
-      else if (/[ \t]/.test(chr)) {
+      else if (/[ \t=]/.test(chr)) {
         if (val) {
           results.push(val)
           val = ''
