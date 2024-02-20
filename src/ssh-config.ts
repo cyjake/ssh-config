@@ -214,7 +214,7 @@ export default class SSHConfig extends Array<Line> {
               }
             }
           }
-          
+
           if (canonicalDomains.length > 0 && canonicalizeHostName) {
             for (const domain of canonicalDomains) {
               const host = `${line.value}.${domain}`
@@ -490,6 +490,9 @@ export function parse(text: string): SSHConfig {
       else if (chr === '\\') {
         escaped = true
       }
+      else if (chr === '#' && !quoted) {
+        break
+      }
       else {
         val += chr
       }
@@ -544,6 +547,9 @@ export function parse(text: string): SSHConfig {
           val = ''
         }
         // otherwise ignore the space
+      }
+      else if (chr === '#') {
+        break
       }
       else {
         val += chr
