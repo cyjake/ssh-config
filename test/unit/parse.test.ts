@@ -320,4 +320,18 @@ describe('parse', function() {
       value: '/Users/mtovino/.ssh/cloudflare/config',
     })
   })
+
+  // https://github.com/cyjake/ssh-config/issues/74
+  it('.parse match host=', function() {
+    const config = parse(`
+      Match host=*.ligo-*.caltech.edu
+        User albert.einstein
+    `)
+    const match = config.find(line => line.type === DIRECTIVE && line.param === 'Match')
+    assert.ok(match)
+    assert.ok('criteria' in match)
+    assert.deepEqual(match.criteria, {
+      host: '*.ligo-*.caltech.edu',
+    })
+  })
 })
