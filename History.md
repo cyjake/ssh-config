@@ -1,3 +1,13 @@
+4.4.2 / 2024-02-20
+==================
+
+## What's Changed
+* fix: directives with trailing comments by @cyjake in https://github.com/cyjake/ssh-config/pull/76
+* fix: match criteria with = separator by @cyjake in https://github.com/cyjake/ssh-config/pull/75
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.4.1...v4.4.2
+
 4.4.1 / 2023-10-02
 ==================
 
