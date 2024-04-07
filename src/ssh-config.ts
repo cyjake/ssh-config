@@ -164,13 +164,21 @@ export default class SSHConfig extends Array<Line> {
   public compute(opts: string | MatchOptions): Record<string, string | string[]> {
     if (typeof opts === 'string') opts = { Host: opts }
 
+    let userInfo: { username: string }
+    try {
+      userInfo = os.userInfo()
+    } catch {
+      // os.userInfo() throws a SystemError if a user has no username or homedir.
+      userInfo = { username: process.env.USER || process.env.USERNAME || '' }
+    }
+
     const context: ComputeContext = {
       params: {
         Host: opts.Host,
         HostName: opts.Host,
         OriginalHost: opts.Host,
-        User: os.userInfo().username,
-        LocalUser: os.userInfo().username,
+        User: userInfo.username,
+        LocalUser: userInfo.username,
       },
       inFinalPass: false,
       doFinalPass: false,

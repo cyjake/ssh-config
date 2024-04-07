@@ -2,13 +2,19 @@ import { strict as assert } from 'assert'
 import fs from 'fs'
 import path from 'path'
 import SSHConfig from '../..'
+import sinon from 'sinon'
+import os from 'os'
 
 const { DIRECTIVE } = SSHConfig
 
-function readFile(fname) {
+function readFile(fname: string) {
   const fpath = path.join(__dirname, '..', fname)
   return fs.readFileSync(fpath, 'utf-8').replace(/\r\n/g, '\n')
 }
+
+afterEach(() => {
+  sinon.restore()
+})
 
 describe('SSHConfig', function() {
   it('.compute by Host', async function() {
@@ -189,6 +195,37 @@ describe('SSHConfig', function() {
     assert.ok(result)
     assert.equal(result.HostName, 'tahoe.com')
     assert.equal(result.ProxyJump, 'proxy.com')
+  })
+
+  it('.compute with os.userInfo() throwing SystemError should have fallback', async () => {
+    const mock = sinon.mock(os)
+    mock.expects('userInfo').throws(new Error('user has no username or homedir'))
+    const config = SSHConfig.parse('')
+    const result = config.compute({ Host: 'tahoe' })
+    assert.ok(result)
+  })
+
+  it('.compute should fallback to process.env.USERNAME on Windows', async () => {
+    const mock = sinon.mock(os)
+    mock.expects('userInfo').throws(new Error('user has no username or homedir'))
+    for (const key of ['USER', 'USERNAME']) {
+      if (process.env[key] != null) sinon.stub(process.env, key).value(undefined)
+    }
+    sinon.define(process.env, 'USERNAME', 'test')
+    const config = SSHConfig.parse('')
+    const result = config.compute({ Host: 'tahoe' })
+    assert.ok(result)
+  })
+
+  it('.compute should default username to empty string if failed to get from env', async () => {
+    const mock = sinon.mock(os)
+    mock.expects('userInfo').throws(new Error('user has no username or homedir'))
+    for (const key of ['USER', 'USERNAME']) {
+      if (process.env[key] != null) sinon.stub(process.env, key).value(undefined)
+    }
+    const config = SSHConfig.parse('')
+    const result = config.compute({ Host: 'tahoe' })
+    assert.ok(result)
   })
 
   it('.find with nothing shall yield error', async function() {
