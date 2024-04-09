@@ -1,3 +1,12 @@
+4.4.3 / 2024-04-09
+==================
+
+## What's Changed
+* fix: os.userInfo() might throw SystemError if homedir isn't available by @cyjake in https://github.com/cyjake/ssh-config/pull/78
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.4.2...v4.4.3
+
 4.4.2 / 2024-02-20
 ==================
 
