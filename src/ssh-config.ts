@@ -556,7 +556,7 @@ export function parse(text: string): SSHConfig {
         }
         // otherwise ignore the space
       }
-      else if (chr === '#') {
+      else if (chr === '#' && results.length > 0) {
         break
       }
       else {

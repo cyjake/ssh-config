@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import fs from 'fs'
 import path from 'path'
-import SSHConfig from '../..'
+import SSHConfig, { LineType } from '../..'
 
 const { parse, COMMENT, DIRECTIVE } = SSHConfig
 
@@ -299,6 +299,7 @@ describe('parse', function() {
     })
   })
 
+  // https://github.com/cyjake/ssh-config/issues/73
   it('.parse match with comments', function() {
     const config = parse(`
       # CLOUDFLARE SETUP https://URL_REDACTED
@@ -333,5 +334,16 @@ describe('parse', function() {
     assert.deepEqual(match.criteria, {
       host: '*.ligo-*.caltech.edu',
     })
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/79
+  it('.parse with # within value', () => {
+    const config = parse(`
+      Host name#with#hash
+        HostName localhost
+    `)
+    assert.equal(config.length, 1)
+    assert.equal(config[0].type, LineType.DIRECTIVE)
+    assert.equal(config[0].value, 'name#with#hash')
   })
 })
