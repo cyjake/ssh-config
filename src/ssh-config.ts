@@ -226,8 +226,8 @@ export default class SSHConfig extends Array<Line> {
           if (canonicalDomains.length > 0 && canonicalizeHostName) {
             for (const domain of canonicalDomains) {
               const host = `${line.value}.${domain}`
-              const { stdout } = spawnSync('nslookup', [host])
-              if (!/server can't find/.test(stdout.toString())) {
+              const { status } = spawnSync('nslookup', [host])
+              if (status === 0) {
                 context.params.Host = host
                 setProperty('Host', host)
                 doPass()
