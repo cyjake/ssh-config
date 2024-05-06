@@ -223,11 +223,11 @@ export default class SSHConfig extends Array<Line> {
             }
           }
 
-          if (canonicalDomains.length > 0 && canonicalizeHostName) {
+          if (canonicalDomains.length > 0 && canonicalizeHostName && context.params.Host === context.params.OriginalHost) {
             for (const domain of canonicalDomains) {
-              const host = `${line.value}.${domain}`
-              const { status } = spawnSync('nslookup', [host])
-              if (status === 0) {
+              const host = `${context.params.OriginalHost}.${domain}`
+              const { status, stderr } = spawnSync('nslookup', [host])
+              if (status === 0 && !/can't find/.test(stderr.toString())) {
                 context.params.Host = host
                 setProperty('Host', host)
                 doPass()
