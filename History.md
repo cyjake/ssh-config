@@ -1,3 +1,14 @@
+4.4.4 / 2024-05-09
+==================
+
+## What's Changed
+* fix: trailing comments, to be or not to be? by @cyjake in https://github.com/cyjake/ssh-config/pull/80
+* fix: determine dns lookup result with status code by @cyjake in https://github.com/cyjake/ssh-config/pull/82
+* fix: canonicalized hostname should not contain glob pattern by @cyjake in https://github.com/cyjake/ssh-config/pull/83
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.4.3...v4.4.4
+
 4.4.3 / 2024-04-09
 ==================
 
