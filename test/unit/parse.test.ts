@@ -145,7 +145,8 @@ describe('parse', function() {
     const config = parse('ProxyCommand ssh -W "%h:%p" firewall.example.org')
     assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'ProxyCommand')
-    assert.deepEqual(config[0].value, ['ssh', '-W', '%h:%p', 'firewall.example.org'])
+    assert.ok(Array.isArray(config[0].value))
+    assert.deepEqual(config[0].value.map(({ val }) => val), ['ssh', '-W', '%h:%p', 'firewall.example.org'])
   })
 
   // https://github.com/microsoft/vscode-remote-release/issues/5562
@@ -159,7 +160,8 @@ describe('parse', function() {
     assert.ok('config' in config[0])
     assert.equal(config[0].config[0].type, DIRECTIVE)
     assert.equal(config[0].config[0].param, 'ProxyCommand')
-    assert.deepEqual(config[0].config[0].value, ['C:\\foo bar\\baz.exe', 'arg', 'arg', 'arg'])
+    assert.ok(Array.isArray(config[0].config[0].value))
+    assert.deepEqual(config[0].config[0].value.map(({ val }) => val), ['C:\\foo bar\\baz.exe', 'arg', 'arg', 'arg'])
   })
 
   it('.parse open ended values', function() {
@@ -180,7 +182,8 @@ describe('parse', function() {
 
     assert.equal(config[0].type, DIRECTIVE)
     assert.equal(config[0].param, 'Host')
-    assert.deepEqual(config[0].value, [
+    assert.ok(Array.isArray(config[0].value))
+    assert.deepEqual(config[0].value.map(({ val }) => val), [
       'foo',
       '!*.bar',
       'baz ham',
@@ -192,7 +195,8 @@ describe('parse', function() {
     const config = parse('Host me local    wi*ldcard?  thisVM "two words"')
 
     assert.equal(config[0].type, DIRECTIVE)
-    assert.deepEqual(config[0].value, [
+    assert.ok(Array.isArray(config[0].value))
+    assert.deepEqual(config[0].value.map(({ val }) => val), [
       'me',
       'local',
       'wi*ldcard?',

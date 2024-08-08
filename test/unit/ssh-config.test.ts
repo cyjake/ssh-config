@@ -4,6 +4,7 @@ import path from 'path'
 import SSHConfig from '../..'
 import sinon from 'sinon'
 import os from 'os'
+import { heredoc } from '../helpers'
 
 const { DIRECTIVE } = SSHConfig
 
@@ -38,7 +39,33 @@ describe('SSHConfig', function() {
       IdentityFile: [
         '~/.ssh/id_rsa'
       ],
-      ProxyCommand: ['ssh', '-q', 'gateway', '-W', '%h:%p'],
+      ProxyCommand: [
+        {
+          'quoted': false,
+          'separator': ' ',
+          'val': 'ssh',
+        },
+        {
+          'quoted': false,
+          'separator': ' ',
+          'val': '-q',
+        },
+        {
+          'quoted': false,
+          'separator': ' ',
+          'val': 'gateway',
+        },
+        {
+          'quoted': false,
+          'separator': ' ',
+          'val': '-W',
+        },
+        {
+          'quoted': false,
+          'separator': ' ',
+          'val': '%h:%p',
+        },
+      ],
       ServerAliveInterval: '80',
       User: 'nil',
       ForwardAgent: 'true'
@@ -68,7 +95,23 @@ describe('SSHConfig', function() {
 
     for (const host of ['foo', 'foo.bar', 'baz ham']) {
       assert.deepEqual(config.compute(host), {
-        Host: ['foo', '*.bar', 'baz ham'],
+        Host: [
+          {
+            'quoted': false,
+            'separator': ' ',
+            'val': 'foo',
+          },
+          {
+            'quoted': true,
+            'separator': ' ',
+            'val': '*.bar',
+          },
+          {
+            'quoted': true,
+            'separator': ' ',
+            'val': 'baz ham',
+          },
+        ],
         HostName: 'example.com',
         User: 'robb'
       })
@@ -125,6 +168,17 @@ describe('SSHConfig', function() {
     const result = config.compute('www')
     assert.ok(result)
     assert.equal(result.ServerAliveCountMax, '2')
+  })
+
+  it('.compute By Host with multiple values', async () => {
+    const config = SSHConfig.parse(`
+      Host example.com example.me
+        HostName example-inc.com
+    `)
+
+    const result = config.compute('example.me')
+    assert.ok(result)
+    assert.equal(result.HostName, 'example-inc.com')
   })
 
   it('.compute by Match host', async function() {
@@ -427,11 +481,12 @@ describe('SSHConfig', function() {
       HostName: 'example.com'
     })
 
-    assert.equal(config.toString(), `IdentityFile ~/.ssh/id_rsa
+    assert.equal(config.toString(), heredoc(`
+      IdentityFile ~/.ssh/id_rsa
 
-Host test2
-  HostName example.com
-`)
+      Host test2
+        HostName example.com
+    `))
   })
 
   it('.append to empty config with new section', function() {
@@ -441,9 +496,10 @@ Host test2
       HostName: 'example.com',
     })
 
-    assert.equal(config.toString(), `Host test
-  HostName example.com
-`)
+    assert.equal(config.toString(), heredoc(`
+      Host test
+        HostName example.com
+    `))
   })
 
   it('.append to empty section config', function() {
@@ -452,9 +508,10 @@ Host test2
       HostName: 'example.com'
     })
 
-    assert.equal(config.toString(), `Host test
-  HostName example.com
-`)
+    assert.equal(config.toString(), heredoc(`
+      Host test
+        HostName example.com
+    `))
   })
 
   it('.compute with properties with multiple values', async function() {
@@ -581,12 +638,13 @@ Host test2
       HostName: 'example.com'
     })
 
-    assert.equal(config.toString(), `IdentityFile ~/.ssh/id_rsa
+    assert.equal(config.toString().trim(), heredoc(`
+      IdentityFile ~/.ssh/id_rsa
 
-Host prependTest
-  HostName example.com
+      Host prependTest
+        HostName example.com
 
-`)
+    `).trim())
   })
 
   it('.prepend to empty config with new section', function() {
@@ -596,45 +654,50 @@ Host prependTest
       HostName: 'example.com',
     })
 
-    assert.equal(config.toString(), `Host prependTest
-  HostName example.com
+    assert.equal(config.toString(), heredoc(`
+      Host prependTest
+        HostName example.com
 
-`)
+    `))
   })
 
   it('.prepend to empty section config', function() {
-    const config = SSHConfig.parse('Host test')
+    const config = SSHConfig.parse('Host test\n')
     config.prepend({
       HostName: 'example.com',
       User: 'brian'
     })
 
-    assert.equal(config.toString(), `HostName example.com
-User brian
+    assert.equal(config.toString(), heredoc(`
+      HostName example.com
+      User brian
 
-Host test`)
+      Host test
+    `))
   })
 
   it('.prepend to empty section and existing section config', function() {
-    const config = SSHConfig.parse(`
-Host test
+    const config = SSHConfig.parse(heredoc(`
+      Host test
 
-Host test2
-  HostName google.com`)
+      Host test2
+        HostName google.com
+    `))
 
     config.prepend({
       HostName: 'example.com',
       User: 'brian'
     })
 
-    assert.equal(config.toString(), `HostName example.com
-User brian
+    assert.equal(config.toString(), heredoc(`
+      HostName example.com
+      User brian
 
+      Host test
 
-Host test
-
-Host test2
-  HostName google.com`)
+      Host test2
+        HostName google.com
+     `))
   })
 
   it('.prepend to with Include', function() {
@@ -667,10 +730,26 @@ Host test2
       HostName: 'microsoft.com',
     }, true)
 
-    assert.equal(config.toString(), `Include ~/.ssh/configs/*
+    assert.equal(config.toString(), heredoc(`
+      Include ~/.ssh/configs/*
 
-Host example
-  HostName microsoft.com
-`)
+      Host example
+        HostName microsoft.com
+    `))
+  })
+
+  it('.prepend directive with multiple values', function() {
+    const config = new SSHConfig()
+
+    config.prepend({
+      Host: ['example.com', 'example.me'],
+      HostName: 'example-inc.dev',
+    })
+
+    assert.equal(config.toString(), heredoc(`
+      Host example.com example.me
+        HostName example-inc.dev
+
+    `))
   })
 })
