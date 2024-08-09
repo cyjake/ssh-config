@@ -1,3 +1,12 @@
+5.0.0 / 2024-08-09
+==================
+
+## What's Changed
+* fix: reserve quotation marks when handling multiple values by @cyjake in https://github.com/cyjake/ssh-config/pull/85
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v4.4.4...v5.0.0
+
 4.4.4 / 2024-05-09
 ==================
 
