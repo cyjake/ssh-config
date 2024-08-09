@@ -87,7 +87,7 @@ describe('stringify', function() {
     `)
 
     assert.equal(stringify(config), `
-      Host foo bar baz "egg ham"
+      Host foo bar "baz" "egg ham"
         HostName example.com
     `)
   })
@@ -160,12 +160,12 @@ describe('stringify', function() {
   it('.stringify ProxyCommand with spaces', function() {
     const config = parse(`
       Host foo
-        ProxyCommand "C:\foo bar\baz.exe" "arg" "arg" "arg"
+        ProxyCommand "C:\\foo bar\\baz.exe" "arg" "arg" "arg"
     `)
 
     assert.equal(stringify(config), `
       Host foo
-        ProxyCommand "C:\foo bar\baz.exe" arg arg arg
+        ProxyCommand "C:\\foo bar\\baz.exe" "arg" "arg" "arg"
     `)
   })
 
@@ -177,6 +177,28 @@ describe('stringify', function() {
     assert.equal(stringify(config), `
       Match host foo final exec "return 0"
         HostName localhost
+    `)
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/84
+  it('.stringify ProxyCommand with =', function() {
+    const config = parse(`
+      Host YYYY
+        HostName YYYY
+        IdentityFile ~/.ssh/id_rsa
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+        ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null XXX@ZZZ
+        User XXX
+    `)
+    assert.equal(stringify(config), `
+      Host YYYY
+        HostName YYYY
+        IdentityFile ~/.ssh/id_rsa
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+        ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null XXX@ZZZ
+        User XXX
     `)
   })
 })

@@ -25,7 +25,7 @@ export interface Directive {
   after: string;
   param: string;
   separator: Separator;
-  value: string | string[];
+  value: string | { val: string, separator: string, quoted?: boolean }[];
   quoted?: boolean;
 }
 
@@ -34,7 +34,7 @@ export interface Section extends Directive {
 }
 
 export interface Match extends Section {
-  criteria: Record<string, string | string[]>
+  criteria: Record<string, string | { val: string, separator: string, quoted?: boolean }[]>
 }
 
 export interface Comment {
@@ -125,8 +125,9 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
 
   for (const key in criteria) {
     const criterion = criteria[key]
+    const values = Array.isArray(criterion) ? criterion.map(({ val }) => val) : criterion
 
-    if (!testCriterion(key, criterion)) {
+    if (!testCriterion(key, values)) {
       return false
     }
   }
@@ -207,7 +208,7 @@ export default class SSHConfig extends Array<Line> {
     const doPass = () => {
       for (const line of this) {
         if (line.type !== LineType.DIRECTIVE) continue
-        if (line.param === 'Host' && glob(line.value, context.params.Host)) {
+        if (line.param === 'Host' && glob(Array.isArray(line.value) ? line.value.map(({ val }) => val) : line.value, context.params.Host)) {
           let canonicalizeHostName = false
           let canonicalDomains: string[] = []
           setProperty(line.param, line.value)
@@ -218,7 +219,7 @@ export default class SSHConfig extends Array<Line> {
                 canonicalizeHostName = true
               }
               if (/^CanonicalDomains$/i.test(subline.param) && Array.isArray(subline.value)) {
-                canonicalDomains = subline.value
+                canonicalDomains = subline.value.map(({ val }) => val)
               }
             }
           }
@@ -333,7 +334,7 @@ export default class SSHConfig extends Array<Line> {
         type: LineType.DIRECTIVE,
         param,
         separator: ' ',
-        value,
+        value: Array.isArray(value) ? value.map((val, i) => ({ val, separator: i === 0 ? '' : ' ' })) : value,
         before: sectionLineFound ? indent : indent.replace(/  |\t/, ''),
         after: '\n',
       }
@@ -386,7 +387,7 @@ export default class SSHConfig extends Array<Line> {
         type: LineType.DIRECTIVE,
         param,
         separator: ' ',
-        value,
+        value: Array.isArray(value) ? value.map((val, i) => ({ val, separator: i === 0 ? '' : ' ' })) : value,
         before: '',
         after: '\n',
       }
@@ -530,8 +531,13 @@ export function parse(text: string): SSHConfig {
   // Host * !local.dev
   // Host "foo bar"
   function values() {
-    const results: string[] = []
+    const results: { val: string, separator: string, quoted: boolean }[] = []
     let val = ''
+    // whether current value is quoted or not
+    let valQuoted = false
+    // the separator preceding current value
+    let valSeparator = ' '
+    // whether current context is within quotations or not
     let quoted = false
     let escaped = false
 
@@ -548,11 +554,14 @@ export function parse(text: string): SSHConfig {
       }
       else if (quoted) {
         val += chr
+        valQuoted = true
       }
       else if (/[ \t=]/.test(chr)) {
         if (val) {
-          results.push(val)
+          results.push({ val, separator: valSeparator, quoted: valQuoted })
           val = ''
+          valQuoted = false
+          valSeparator = chr
         }
         // otherwise ignore the space
       }
@@ -567,10 +576,10 @@ export function parse(text: string): SSHConfig {
     }
 
     if (quoted || escaped) {
-      throw new Error(`Unexpected line break at ${results.concat(val).join(' ')}`)
+      throw new Error(`Unexpected line break at ${results.map(({ val }) => val).concat(val).join(' ')}`)
     }
-    if (val) results.push(val)
-    return results.length > 1 ? results : results[0]
+    if (val) results.push({ val, separator: valSeparator, quoted: valQuoted })
+    return results.length > 1 ? results : results[0].val
   }
 
   function directive() {
@@ -592,12 +601,12 @@ export function parse(text: string): SSHConfig {
       const criteria: Match['criteria'] = {}
 
       if (typeof result.value === 'string') {
-        result.value = [result.value]
+        result.value = [{ val: result.value, separator: '', quoted: result.quoted }]
       }
 
       let i = 0
       while (i < result.value.length) {
-        const keyword = result.value[i]
+        const { val: keyword } = result.value[i]
 
         switch (keyword.toLowerCase()) {
           case 'all':
@@ -610,7 +619,7 @@ export function parse(text: string): SSHConfig {
             if (i + 1 >= result.value.length) {
               throw new Error(`Missing value for match criteria ${keyword}`)
             }
-            criteria[keyword] = result.value[i + 1]
+            criteria[keyword] = result.value[i + 1].val
             i += 2
             break
         }
@@ -663,7 +672,11 @@ export function stringify(config: SSHConfig): string {
 
   function formatValue(value: string | string[] | Record<string, any>, quoted: boolean) {
     if (Array.isArray(value)) {
-      return value.map(chunk => formatValue(chunk, RE_SPACE.test(chunk))).join(' ')
+      let result = ''
+      for (const { val, separator, quoted } of value) {
+        result += (result ? separator : '') + formatValue(val, quoted || RE_SPACE.test(val))
+      }
+      return result
     }
     return quoted ? `"${value}"` : value
   }
@@ -675,15 +688,15 @@ export function stringify(config: SSHConfig): string {
     return `${line.param}${line.separator}${value}`
   }
 
-  const format = line => {
+  const format = (line: Line) => {
     str += line.before
 
     if (line.type === LineType.COMMENT) {
       str += line.content
     }
     else if (line.type === LineType.DIRECTIVE && MULTIPLE_VALUE_PROPS.includes(line.param)) {
-      [].concat(line.value).forEach(function (value, i, values) {
-        str += formatDirective({ ...line, value })
+      (Array.isArray(line.value) ? line.value : [line.value]).forEach((value, i, values) => {
+        str += formatDirective({ ...line, value: typeof value !== 'string' ? value.val : value })
         if (i < values.length - 1) str += `\n${line.before}`
       })
     }
@@ -693,7 +706,7 @@ export function stringify(config: SSHConfig): string {
 
     str += line.after
 
-    if (line.config) {
+    if ('config' in line) {
       line.config.forEach(format)
     }
   }
