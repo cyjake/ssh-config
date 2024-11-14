@@ -1,3 +1,12 @@
+5.0.1 / 2024-11-14
+==================
+
+## What's Changed
+* fix: Wrong typings for compute method by @cyjake in https://github.com/cyjake/ssh-config/pull/87
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.0.0...v5.0.1
+
 5.0.0 / 2024-08-09
 ==================
 
