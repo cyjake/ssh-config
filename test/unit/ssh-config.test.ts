@@ -40,35 +40,15 @@ describe('SSHConfig', function() {
         '~/.ssh/id_rsa'
       ],
       ProxyCommand: [
-        {
-          'quoted': false,
-          'separator': ' ',
-          'val': 'ssh',
-        },
-        {
-          'quoted': false,
-          'separator': ' ',
-          'val': '-q',
-        },
-        {
-          'quoted': false,
-          'separator': ' ',
-          'val': 'gateway',
-        },
-        {
-          'quoted': false,
-          'separator': ' ',
-          'val': '-W',
-        },
-        {
-          'quoted': false,
-          'separator': ' ',
-          'val': '%h:%p',
-        },
+        'ssh',
+        '-q',
+        'gateway',
+        '-W',
+        '%h:%p',
       ],
       ServerAliveInterval: '80',
       User: 'nil',
-      ForwardAgent: 'true'
+      ForwardAgent: 'true',
     })
   })
 
@@ -96,21 +76,9 @@ describe('SSHConfig', function() {
     for (const host of ['foo', 'foo.bar', 'baz ham']) {
       assert.deepEqual(config.compute(host), {
         Host: [
-          {
-            'quoted': false,
-            'separator': ' ',
-            'val': 'foo',
-          },
-          {
-            'quoted': true,
-            'separator': ' ',
-            'val': '*.bar',
-          },
-          {
-            'quoted': true,
-            'separator': ' ',
-            'val': 'baz ham',
-          },
+          'foo',
+          '*.bar',
+          'baz ham',
         ],
         HostName: 'example.com',
         User: 'robb'

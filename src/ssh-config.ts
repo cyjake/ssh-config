@@ -185,19 +185,20 @@ export default class SSHConfig extends Array<Line> {
       doFinalPass: false,
     }
 
-    const obj = {}
-    const setProperty = (name: string, value) => {
+    const obj: Record<string, string | string[]> = {}
+    const setProperty = (name: string, value: string | { val: string }[]) => {
+      const val = Array.isArray(value) ? value.map(({ val }) => val) : value
+      const val0 = Array.isArray(val) ? val[0] : val
       if (MULTIPLE_VALUE_PROPS.includes(name)) {
-        const list = obj[name] || (obj[name] = [])
-        list.push(value)
+        const list = (obj[name] || (obj[name] = [])) as string[]
+        list.push(...([] as string[]).concat(val))
       } else if (obj[name] == null) {
         if (name === 'HostName') {
-          context.params.HostName = value
+          context.params.HostName = val0
         } else if (name === 'User') {
-          context.params.User = value
+          context.params.User = val0
         }
-
-        obj[name] = value
+        obj[name] = val
       }
     }
 
