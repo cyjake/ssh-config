@@ -39,13 +39,7 @@ describe('SSHConfig', function() {
       IdentityFile: [
         '~/.ssh/id_rsa'
       ],
-      ProxyCommand: [
-        'ssh',
-        '-q',
-        'gateway',
-        '-W',
-        '%h:%p',
-      ],
+      ProxyCommand: 'ssh -q gateway -W %h:%p',
       ServerAliveInterval: '80',
       User: 'nil',
       ForwardAgent: 'true',
@@ -265,6 +259,21 @@ describe('SSHConfig', function() {
     const config = SSHConfig.parse('')
     const result = config.compute({ Host: 'tahoe' })
     assert.ok(result)
+  })
+
+  it('.compute should preserve separators in multi-value directives', async () => {
+    const config = SSHConfig.parse(`
+      Host YYYY
+        HostName YYYY
+        IdentityFile ~/.ssh/id_rsa
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+        ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null XXX@ZZZ
+        User XXX
+    `)
+
+    const result = config.compute({ Host: 'YYYY' })
+    assert.equal(result.ProxyCommand, 'ssh -i ~/.ssh/id_rsa -W %h:%p -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null XXX@ZZZ')
   })
 
   it('.find with nothing shall yield error', async function() {

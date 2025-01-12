@@ -69,7 +69,7 @@ interface ComputeContext {
   inFinalPass: boolean;
 }
 
-const MULTIPLE_VALUE_PROPS = [
+const REPEATABLE_DIRECTIVES = [
   'IdentityFile',
   'LocalForward',
   'RemoteForward',
@@ -186,10 +186,19 @@ export default class SSHConfig extends Array<Line> {
     }
 
     const obj: Record<string, string | string[]> = {}
-    const setProperty = (name: string, value: string | { val: string }[]) => {
-      const val = Array.isArray(value) ? value.map(({ val }) => val) : value
+    const setProperty = (name: string, value: string | { val: string, separator: string }[]) => {
+      let val: string | string[]
+      if (Array.isArray(value)) {
+        if (/ProxyCommand/i.test(name)) {
+          val = value.map(({ val, separator }) => `${separator}${val}`).join('').trim()
+        } else {
+          val = value.map(({ val }) => val)
+        }
+      } else {
+        val = value
+      }
       const val0 = Array.isArray(val) ? val[0] : val
-      if (MULTIPLE_VALUE_PROPS.includes(name)) {
+      if (REPEATABLE_DIRECTIVES.includes(name)) {
         const list = (obj[name] || (obj[name] = [])) as string[]
         list.push(...([] as string[]).concat(val))
       } else if (obj[name] == null) {
@@ -695,7 +704,7 @@ export function stringify(config: SSHConfig): string {
     if (line.type === LineType.COMMENT) {
       str += line.content
     }
-    else if (line.type === LineType.DIRECTIVE && MULTIPLE_VALUE_PROPS.includes(line.param)) {
+    else if (line.type === LineType.DIRECTIVE && REPEATABLE_DIRECTIVES.includes(line.param)) {
       (Array.isArray(line.value) ? line.value : [line.value]).forEach((value, i, values) => {
         str += formatDirective({ ...line, value: typeof value !== 'string' ? value.val : value })
         if (i < values.length - 1) str += `\n${line.before}`
