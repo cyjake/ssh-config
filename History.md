@@ -1,3 +1,12 @@
+5.0.2 / 2025-01-13
+==================
+
+## What's Changed
+* fix: format forward commands directly when .compute() by @cyjake in https://github.com/cyjake/ssh-config/pull/90
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.0.1...v5.0.2
+
 5.0.1 / 2024-11-14
 ==================
 
