@@ -1,3 +1,12 @@
+5.0.3 / 2025-02-05
+==================
+
+## What's Changed
+* fix: preserve quotations when compute by @cyjake in https://github.com/cyjake/ssh-config/pull/92
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.0.2...v5.0.3
+
 5.0.2 / 2025-01-13
 ==================
 
