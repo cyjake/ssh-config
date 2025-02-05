@@ -186,11 +186,13 @@ export default class SSHConfig extends Array<Line> {
     }
 
     const obj: Record<string, string | string[]> = {}
-    const setProperty = (name: string, value: string | { val: string, separator: string }[]) => {
+    const setProperty = (name: string, value: string | { val: string, separator: string, quoted?: boolean }[]) => {
       let val: string | string[]
       if (Array.isArray(value)) {
         if (/ProxyCommand/i.test(name)) {
-          val = value.map(({ val, separator }) => `${separator}${val}`).join('').trim()
+          val = value.map(({ val, separator, quoted }) => {
+            return `${separator}${quoted ? `"${val.replace(/"/g, '\\"')}"` : val}`
+          }).join('').trim()
         } else {
           val = value.map(({ val }) => val)
         }
