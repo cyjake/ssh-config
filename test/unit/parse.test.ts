@@ -11,6 +11,12 @@ function readFile(fname) {
 }
 
 describe('parse', function() {
+  it('.parse empty config', async function() {
+    assert.equal(parse('').length, 0)
+    assert.equal(parse('\n').length, 1)
+    assert.equal(parse('  \n  ').length, 1)
+  })
+
   it('.parse simple config', async function() {
     const config = parse(readFile('fixture/config'))
 

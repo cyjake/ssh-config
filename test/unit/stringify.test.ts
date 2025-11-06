@@ -18,6 +18,12 @@ describe('stringify', function() {
     assert.equal(fixture, stringify(config))
   })
 
+  it('.stringify empty config retained', function() {
+    assert.equal(stringify(parse('')), '')
+    assert.equal(stringify(parse('\n')), '\n')
+    assert.equal(stringify(parse('  \n  ')), '  \n  ')
+  })
+
   it('.stringify config with white spaces and comments retained', function() {
     const config = parse(`
       # Lake tahoe
