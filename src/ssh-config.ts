@@ -13,6 +13,7 @@ const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 export enum LineType {
   DIRECTIVE = 1,
   COMMENT = 2,
+  EMPTY = 3
 }
 
 export type Separator = ' ' | '=' | '\t';
@@ -44,7 +45,13 @@ export interface Comment {
   content: string;
 }
 
-export type Line = Match | Section | Directive | Comment;
+export interface Empty {
+  type: LineType.EMPTY
+  before: string,
+  after: string
+}
+
+export type Line = Match | Section | Directive | Comment | Empty
 
 export interface FindOptions {
   Host?: string;
@@ -663,7 +670,11 @@ export function parse(text: string): SSHConfig {
     else if (node.type === LineType.DIRECTIVE && !node.param) {
       // blank lines at file end
       if (config.length === 0) {
-        configWas[configWas.length - 1].after += node.before
+        if (configWas.length === 0) {
+          configWas.push({ type: LineType.EMPTY, before: '', after: node.before })
+        } else {
+          configWas[configWas.length - 1].after += node.before
+        }
       } else {
         config[config.length - 1].after += node.before
       }
