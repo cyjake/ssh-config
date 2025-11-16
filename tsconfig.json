@@ -8,7 +8,17 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "declaration": true,
+    "declarationDir": "./dist",
     "skipLibCheck": true,
-    "strictNullChecks": true
-  }
+    "strictNullChecks": true,
+    "outDir": "./dist",
+    "rootDir": "src"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

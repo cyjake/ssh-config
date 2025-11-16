@@ -8,10 +8,7 @@
     "url": "git@github.com:cyjake/ssh-config.git"
   },
   "files": [
-    "index.js",
-    "index.d.ts",
-    "src/*.js",
-    "src/*.d.ts"
+    "dist/**"
   ],
   "devDependencies": {
     "@types/mocha": "^9.1.0",
@@ -24,16 +21,19 @@
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
     "sinon": "^17.0.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.4"
   },
   "scripts": {
     "lint": "eslint --ext ts .",
     "lint:fix": "eslint --ext ts --fix .",
-    "prepack": "tsc",
-    "pretest": "tsc",
-    "test": "NODE_OPTIONS=--enable-source-maps mocha --exit --recursive",
-    "test:coverage": "nyc mocha --exit --recursive && nyc report --reporter=lcov"
+    "build": "tsc",
+    "prepack": "npm run build",
+    "test": "mocha",
+    "test:coverage": "nyc mocha && nyc report --reporter=lcov"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engine": {
     "node": ">= 14.0.0"
   },
