@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import glob from '../../src/glob'
+import { glob } from '../..'
 
 describe('glob', function() {
   it('glob asterisk mark', function() {

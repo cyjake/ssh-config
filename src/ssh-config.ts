@@ -738,3 +738,5 @@ export function stringify(config: SSHConfig): string {
 
   return str
 }
+
+export { glob }
