@@ -6,7 +6,7 @@ import SSHConfig from '../..'
 
 const { parse, stringify } = SSHConfig
 
-function readFile(fname) {
+function readFile(fname: string) {
   const fpath = path.join(__dirname, '..', fname)
   return fs.readFileSync(fpath, 'utf-8').replace(/\r\n/g, '\n')
 }

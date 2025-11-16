@@ -1,3 +1,16 @@
+5.0.4 / 2025-11-16
+==================
+
+## What's Changed
+* fix: do not crash on empty config files by @KnorpelSenf in https://github.com/cyjake/ssh-config/pull/95
+* refactor: improve TypeScript build configuration by @cyjake in https://github.com/cyjake/ssh-config/pull/96
+* Ci/trusted npm publish by @cyjake in https://github.com/cyjake/ssh-config/pull/97
+
+## New Contributors
+* @KnorpelSenf made their first contribution in https://github.com/cyjake/ssh-config/pull/95
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.0.3...v5.0.4
+
 5.0.3 / 2025-02-05
 ==================
 

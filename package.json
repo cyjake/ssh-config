@@ -1,7 +1,7 @@
 {
   "name": "ssh-config",
   "description": "SSH config parser and stringifier",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "author": "Chen Yangjian (https://www.cyj.me)",
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
     "lint:fix": "eslint --ext ts --fix .",
     "build": "tsc",
     "prepack": "npm run build",
+    "pretest": "npm run build",
     "test": "mocha",
     "test:coverage": "nyc mocha && nyc report --reporter=lcov"
   },
