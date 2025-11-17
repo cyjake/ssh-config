@@ -1,5 +1,8 @@
-import fs from 'fs/promises'
-import path from 'path'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url))
 
 const stripPattern = /^[ \t]*(?=[^\s]+)/mg
 
@@ -12,6 +15,6 @@ export function heredoc(text: string) {
 }
 
 export async function readFixture(fname: string) {
-  const fpath = path.join(__dirname, 'fixture', fname)
+  const fpath = path.join(currentDir, 'fixture', fname)
   return (await fs.readFile(fpath, 'utf-8')).replace(/\r\n/g, '\n')
 }

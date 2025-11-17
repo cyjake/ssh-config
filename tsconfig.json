@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "module": "ESNext",
     "moduleResolution": "Node",
-    "module": "CommonJS",
+    "target": "ESNext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    "declaration": true,
-    "declarationDir": "./dist",
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "outDir": "./dist",
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true,
+    "declarationDir": "./lib",
+    "outDir": "./lib",
     "rootDir": "src"
   },
   "include": [
@@ -20,5 +21,12 @@
   "exclude": [
     "dist",
     "node_modules"
-  ]
+  ],
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "allowJs": true,
+      "allowImportingTsExtensions": true
+    }
+  }
 }

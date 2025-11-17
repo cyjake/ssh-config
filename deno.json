@@ -1,0 +1,21 @@
+{
+  "name": "@cyjake/ssh-config",
+  "version": "5.0.4",
+  "exports": "./src/ssh-config.ts",
+  "imports": {
+    "sinon": "npm:sinon@^21.0.0",
+    "mocha": "npm:mocha@^10.0.0"
+  },
+  "publish": {
+    "include": [
+      "src",
+      "LICENSE",
+      "Readme.md"
+    ]
+  },
+  "tasks": {
+    "test": "tsc && deno test test/deno_test.ts --allow-env --allow-read --allow-run --no-check --sloppy-imports"
+  },
+  "nodeModulesDir": "auto",
+  "lock": false
+}

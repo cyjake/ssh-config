@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert'
-import { glob } from '../../src/ssh-config.ts'
+import { glob } from '../../dist/ssh-config.js'
 
 describe('glob', function() {
   it('glob asterisk mark', function() {

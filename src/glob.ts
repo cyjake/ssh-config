@@ -23,7 +23,7 @@ function match(pattern: string, text: string) {
  * @param {string|string[]} patternList
  * @param {string} str
  */
-function glob(patternList: string | string[], text: string) {
+function glob(patternList: string | string[], text: string): boolean {
   const patterns = Array.isArray(patternList) ? patternList : patternList.split(/,/)
 
   // > If a negated entry is matched, then the Host entry is ignored, regardless of whether any other patterns on the line match.
