@@ -20,8 +20,8 @@ function match(pattern: string, text: string) {
  * A helper function to match input against [pattern-list](https://www.freebsd.org/cgi/man.cgi?query=ssh_config&sektion=5#PATTERNS).
  * According to `man ssh_config`, negated patterns shall be matched first.
  *
- * @param {string|string[]} patternList
- * @param {string} str
+ * @param {string|string[]} patternList one or more glob patterns to match
+ * @param {string} text the text to match
  */
 function glob(patternList: string | string[], text: string): boolean {
   const patterns = Array.isArray(patternList) ? patternList : patternList.split(/,/)

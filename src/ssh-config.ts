@@ -10,55 +10,127 @@ const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|User
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
+/**
+ * A type of line in an ssh-config file. Differentiates between directives,
+ * comments, and empty lines.
+ */
 export enum LineType {
+  /** line with a directive in an ssh-config file */
   DIRECTIVE = 1,
+  /** line with a comment in an ssh-config file */
   COMMENT = 2,
+  /** empty line in an ssh-config file */
   EMPTY = 3
 }
 
+/** A separator character in a directive. */
 export type Separator = ' ' | '=' | '\t';
 
 type Space = ' ' | '\t' | '\n';
 
+/**
+ * A directive in an ssh-config file. This is the main type of element in the
+ * file. The directive primarily consists of a
+ * {@link Directive.param | parameter}, and a {@link Directive.value | value},
+ * much like a key-value pair.
+ *
+ * We additionally keep track of a few other fields in order to print out a
+ * directive exactly as it was read, even though the used syntax is equivalent.
+ */
 export interface Directive {
+  /** type of line, always {@link LineType.DIRECTIVE} */
   type: LineType.DIRECTIVE;
+  /** unrelated string encountered before this directive */
   before: string;
+  /** unrelated string encountered after this directive */
   after: string;
+  /** parameter name of this directive */
   param: string;
+  /** separator char used in this directive */
   separator: Separator;
+  /** the actual value of this directive */
   value: string | { val: string, separator: string, quoted?: boolean }[];
+  /** whether or not quotes were used for the directive value */
   quoted?: boolean;
 }
 
+/** 
+ * A section is a Host or Match directive in an ssh-config file. It includes a
+ * reference to the contained config via {@link Section.config}.
+ */
 export interface Section extends Directive {
+  /** the config contained in this section */
   config: SSHConfig;
 }
 
+/**
+ * Represents a Match directive in an ssh-config file. It includes a reference
+ * to the contained config via {@link Section.config}, and a map of all match
+ * criteria via {@link Match.criteria}.
+ */
 export interface Match extends Section {
-  criteria: Record<string, string | { val: string, separator: string, quoted?: boolean }[]>
+  /** the match criteria contained in this Match section */
+  criteria: Record<string, string | {
+     /** the value of this match criterion */
+     val: string,
+     /** separator used for this match criterion */
+     separator: string,
+     /** whether this match criterion was quoted */
+     quoted?: boolean
+  }[]>
 }
 
+/**
+ * A comment in an ssh-config file. Stores the content of the comment as a
+ * string in {@link Comment.content}.
+ */
 export interface Comment {
+  /** type of line, always {@link LineType.COMMENT} */
   type: LineType.COMMENT;
+  /** unrelated string encountered before this directive */
   before: string;
+  /** unrelated string encountered after this directive */
   after: string;
+  /** content of the comment */
   content: string;
 }
 
+/**
+ * An empty or whitespace-only line in an ssh-config file. This is mainly used
+ * to represent empty config ssh-config files. The actual whitespace characters
+ * is usually stored in the {@link Empty.before | before} field. Storing it in
+ * the {@link Empty.after | after} field is permitted, too.
+ */
 export interface Empty {
+  /** type of line, always {@link LineType.COMMENT} */
   type: LineType.EMPTY
+  /** unrelated string encountered before this directive */
   before: string,
+  /** unrelated string encountered after this directive */
   after: string
 }
 
+/**
+ * A single line in an ssh-config file. The union can be discrimiated via its
+ * `type` property of type {@link LineType}.
+ */
 export type Line = Match | Section | Directive | Comment | Empty
 
+/**
+ * Options for finding a {@link Section} via Host or Match.
+ */
 export interface FindOptions {
+  /** the host to look for */
   Host?: string;
 }
 
+/**
+ * Options for querying an SSH config via host and user.
+ */
 export interface MatchOptions {
+  /** the host of the query */
   Host: string;
+  /** the user of the query */
   User?: string;
 }
 
@@ -142,9 +214,17 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
   return true
 }
 
+/**
+ * Represents parsed SSH config. Main element of this library.
+ * 
+ * A parsed SSH config is modelled as an array of {@link Line}s.
+ */
 export default class SSHConfig extends Array<Line> {
+  /** shortcut to access {@link LineType.DIRECTIVE} */
   static readonly DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
+  /** shortcut to access {@link LineType.COMMENT} */
   static readonly COMMENT: LineType.COMMENT = LineType.COMMENT
+  /** shortcut to access {@link LineType.EMPTY} */
   static readonly EMPTY: LineType.EMPTY = LineType.EMPTY
 
   /**
@@ -331,6 +411,9 @@ export default class SSHConfig extends Array<Line> {
     if (index >= 0) return this.splice(index, 1)
   }
 
+  /**
+   * Convert this SSH config to its textual presentation via {@link stringify}.
+   */
   public override toString(): string {
     return stringify(this)
   }
