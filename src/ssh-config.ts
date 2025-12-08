@@ -1,7 +1,7 @@
 
-import glob from './glob'
-import { spawnSync } from 'child_process'
-import os from 'os'
+import glob from './glob.ts'
+import { spawnSync } from 'node:child_process'
+import os from 'node:os'
 
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
@@ -84,7 +84,8 @@ const REPEATABLE_DIRECTIVES = [
   'CertificateFile',
 ]
 
-function compare(line, opts) {
+function compare(line: Directive, opts: FindOptions) {
+  // @ts-ignore
   return opts.hasOwnProperty(line.param) && opts[line.param] === line.value
 }
 
@@ -283,23 +284,23 @@ export default class SSHConfig extends Array<Line> {
   /**
    * Find by Host or Match.
    */
-  public find(opts: FindOptions): Line | undefined;
+  public override find(opts: FindOptions): Line | undefined;
 
   /**
    * Find by search function.
    * @param predicate Function to check against each line; should return a truthy value when a
    * matching line is given.
    */
-  public find(predicate: (line: Line, index: number, config: Line[]) => unknown): Line | undefined;
+  public override find(predicate: (line: Line, index: number, config: Line[]) => unknown): Line | undefined;
 
-  public find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
+  public override find(opts: ((line: Line, index: number, config: Line[]) => unknown) | FindOptions) {
     if (typeof opts === 'function') return super.find(opts)
 
     if (!(opts && ('Host' in opts || 'Match' in opts))) {
       throw new Error('Can only find by Host or Match')
     }
 
-    return super.find(line => compare(line, opts))
+    return super.find((line: Line) => 'param' in line && compare(line, opts))
   }
 
 
@@ -323,13 +324,13 @@ export default class SSHConfig extends Array<Line> {
     } else if (!(opts && ('Host' in opts || 'Match' in opts))) {
       throw new Error('Can only remove by Host or Match')
     } else {
-      index = super.findIndex(line => compare(line, opts))
+      index = super.findIndex((line: Line) => 'param' in line && compare(line, opts))
     }
 
     if (index >= 0) return this.splice(index, 1)
   }
 
-  public toString(): string {
+  public override toString(): string {
     return stringify(this)
   }
 
@@ -704,9 +705,9 @@ export function stringify(config: SSHConfig): string {
     return quoted ? `"${value}"` : value
   }
 
-  function formatDirective(line) {
+  function formatDirective(line: Directive) {
     const quoted = line.quoted
-      || (RE_QUOTE_DIRECTIVE.test(line.param) && RE_SPACE.test(line.value))
+      || (RE_QUOTE_DIRECTIVE.test(line.param) && typeof line.value === 'string' && RE_SPACE.test(line.value))
     const value = formatValue(line.value, quoted)
     return `${line.param}${line.separator}${value}`
   }
@@ -739,4 +740,4 @@ export function stringify(config: SSHConfig): string {
   return str
 }
 
-export { glob }
+export { glob, SSHConfig }

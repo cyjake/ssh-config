@@ -1,8 +1,8 @@
 import { strict as assert } from 'node:assert'
-import SSHConfig from '../../src/ssh-config.ts'
+import SSHConfig from '../../dist/ssh-config.js'
 import os from 'node:os'
 import sinon from 'sinon'
-import { readFixture } from '../helpers.ts'
+import { readFixture } from '../helpers.cjs'
 
 describe('compute', function() {
   afterEach(function() {

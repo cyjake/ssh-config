@@ -1,7 +1,8 @@
 {
-  "require": ["ts-node/register"],
+  "require": "ts-node/register",
   "extensions": ["ts"],
-  "spec": ["test/unit/**/*.test.ts"],
   "exit": true,
-  "recursive": true
+  "recursive": true,
+  "enableSourceMaps": true,
+  "timeout": 5000
 }

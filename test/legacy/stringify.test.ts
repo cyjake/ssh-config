@@ -1,7 +1,7 @@
 
 import { strict as assert } from 'node:assert'
-import { SSHConfig, parse, stringify } from '../../src/ssh-config.ts'
-import { readFixture } from '../helpers.ts'
+import { SSHConfig, parse, stringify } from '../../dist/ssh-config.js'
+import { readFixture } from '../helpers.cjs'
 
 describe('stringify', function() {
   it('.stringify the parsed object back to string', async function() {

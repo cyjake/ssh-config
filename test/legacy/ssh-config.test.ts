@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert'
-import { SSHConfig, type Line } from '../../src/ssh-config.ts'
-import { heredoc, readFixture } from '../helpers.ts'
+import { SSHConfig, type Line } from '../../dist/ssh-config.js'
+import { heredoc, readFixture } from '../helpers.cjs'
 
 const { DIRECTIVE } = SSHConfig
 
