@@ -2,7 +2,9 @@
 
 [![NPM Downloads](https://img.shields.io/npm/dm/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
 [![NPM Version](http://img.shields.io/npm/v/ssh-config.svg?style=flat)](https://www.npmjs.com/package/ssh-config)
+![JSR Version](https://img.shields.io/jsr/v/%40cyjake/ssh-config)
 [![Build Status](https://travis-ci.org/cyjake/ssh-config.svg)](https://travis-ci.org/cyjake/ssh-config)
+[![Deno CI](https://github.com/cyjake/ssh-config/actions/workflows/deno.yml/badge.svg)](https://github.com/cyjake/ssh-config/actions/workflows/deno.yml)
 [![Node CI](https://github.com/cyjake/ssh-config/actions/workflows/nodejs.yml/badge.svg)](https://github.com/cyjake/ssh-config/actions/workflows/nodejs.yml)
 [![codecov](https://codecov.io/gh/cyjake/ssh-config/branch/master/graph/badge.svg?token=RMyTgcL8Kg)](https://codecov.io/gh/cyjake/ssh-config)
 
