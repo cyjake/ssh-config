@@ -145,6 +145,7 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
 export default class SSHConfig extends Array<Line> {
   static readonly DIRECTIVE: LineType.DIRECTIVE = LineType.DIRECTIVE
   static readonly COMMENT: LineType.COMMENT = LineType.COMMENT
+  static readonly EMPTY: LineType.EMPTY = LineType.EMPTY
 
   /**
    * Parse SSH config text into structured object.
