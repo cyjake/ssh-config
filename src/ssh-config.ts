@@ -230,7 +230,7 @@ export default class SSHConfig extends Array<Line> {
   /**
    * Parse SSH config text into structured object.
    */
-  public static parse(text: string): SSHConfig {
+  public static parse(text: string | Buffer): SSHConfig {
     return parse(text)
   }
 
@@ -531,14 +531,17 @@ export default class SSHConfig extends Array<Line> {
 /**
  * Parse SSH config text into structured object.
  */
-export function parse(text: string): SSHConfig {
+export function parse(text: string | Buffer): SSHConfig {
+  // Handle Buffer input by converting to string
+  const input: string = typeof text === 'string' ? text : text.toString('utf-8')
+
   let i = 0
   let chr = next()
   let config: SSHConfig = new SSHConfig()
   let configWas = config
 
   function next() {
-    return text[i++]
+    return input[i++]
   }
 
   function space(): Space {
