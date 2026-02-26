@@ -355,4 +355,14 @@ describe('parse', function() {
     assert.equal(config[0].type, LineType.DIRECTIVE)
     assert.equal(config[0].value, 'name#with#hash')
   })
+
+  // https://github.com/cyjake/ssh-config/issues/103
+  it('.parse Buffer input', async function() {
+    const text = await readFixture('config')
+    const buffer = Buffer.from(text, 'utf-8')
+    const configFromBuffer = parse(buffer)
+    const configFromString = parse(text)
+
+    assert.deepEqual(configFromBuffer, configFromString)
+  })
 })
