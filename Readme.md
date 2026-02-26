@@ -95,6 +95,28 @@ suggested that the general settings shall be at the end of your config file.
 The `IdentityFile` parameter always contain an array to make possible multiple
 `IdentityFile` settings to be able to coexist.
 
+#### Case-Insensitive Matching
+
+OpenSSH treats configuration directives case-insensitively. By default, `compute()`
+preserves the original case from the config file. To normalize directive names to
+lowercase (matching OpenSSH behavior), use the `ignoreCase` option:
+
+```js
+const config = SSHConfig.parse(`
+  Host example
+    hOsTnaME 1.2.3.4
+    USER admin
+`)
+
+// Default - preserves original case
+config.compute('example')
+// => { hOsTnaME: '1.2.3.4', USER: 'admin' }
+
+// With ignoreCase - lowercase to match OpenSSH
+config.compute('example', { ignoreCase: true })
+// => { hostname: '1.2.3.4', user: 'admin' }
+```
+
 ### `.find` sections by Host or Match
 
 **NOTICE**: This method is provided to find the corresponding section in the
