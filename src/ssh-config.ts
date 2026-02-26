@@ -135,6 +135,14 @@ export interface MatchOptions {
   User?: string;
 }
 
+/**
+ * Options for computing SSH config results.
+ */
+export interface ComputeOptions {
+  /** when true, normalizes directive names to lowercase to match OpenSSH behavior */
+  ignoreCase?: boolean;
+}
+
 interface MatchParams {
   Host: string;
   HostName: string;
@@ -250,9 +258,14 @@ export default class SSHConfig extends Array<Line> {
   /**
    * Query SSH config by host and user.
    */
-  public compute(opts: MatchOptions): Record<string, string | string[]>;
+  public compute(opts: MatchOptions, computeOpts?: ComputeOptions): Record<string, string | string[]>;
 
-  public compute(opts: string | MatchOptions): Record<string, string | string[]> {
+  /**
+   * Query SSH config by host with options.
+   */
+  public compute(host: string, computeOpts?: ComputeOptions): Record<string, string | string[]>;
+
+  public compute(opts: string | MatchOptions, computeOpts?: ComputeOptions): Record<string, string | string[]> {
     if (typeof opts === 'string') opts = { Host: opts }
 
     let userInfo: { username: string }
@@ -277,9 +290,10 @@ export default class SSHConfig extends Array<Line> {
 
     const obj: Record<string, string | string[]> = {}
     const setProperty = (name: string, value: string | { val: string, separator: string, quoted?: boolean }[]) => {
+      const key = computeOpts?.ignoreCase ? name.toLowerCase() : name
       let val: string | string[]
       if (Array.isArray(value)) {
-        if (/ProxyCommand/i.test(name)) {
+        if (/ProxyCommand/i.test(key)) {
           val = value.map(({ val, separator, quoted }) => {
             return `${separator}${quoted ? `"${val.replace(/"/g, '\\"')}"` : val}`
           }).join('').trim()
@@ -290,16 +304,18 @@ export default class SSHConfig extends Array<Line> {
         val = value
       }
       const val0 = Array.isArray(val) ? val[0] : val
-      if (REPEATABLE_DIRECTIVES.includes(name)) {
-        const list = (obj[name] || (obj[name] = [])) as string[]
+      // Use case-insensitive check for repeatable directives
+      const isRepeatable = REPEATABLE_DIRECTIVES.some(d => d.toLowerCase() === name.toLowerCase())
+      if (isRepeatable) {
+        const list = (obj[key] || (obj[key] = [])) as string[]
         list.push(...([] as string[]).concat(val))
-      } else if (obj[name] == null) {
+      } else if (obj[key] == null) {
         if (name === 'HostName') {
           context.params.HostName = val0
         } else if (name === 'User') {
           context.params.User = val0
         }
-        obj[name] = val
+        obj[key] = val
       }
     }
 
@@ -310,7 +326,8 @@ export default class SSHConfig extends Array<Line> {
     const doPass = () => {
       for (const line of this) {
         if (line.type !== LineType.DIRECTIVE) continue
-        if (line.param === 'Host' && glob(Array.isArray(line.value) ? line.value.map(({ val }) => val) : line.value, context.params.Host)) {
+        // Host and Match directives are always case-insensitive (per OpenSSH behavior)
+        if (/^host$/i.test(line.param) && glob(Array.isArray(line.value) ? line.value.map(({ val }) => val) : line.value, context.params.Host)) {
           let canonicalizeHostName = false
           let canonicalDomains: string[] = []
           setProperty(line.param, line.value)
@@ -338,13 +355,13 @@ export default class SSHConfig extends Array<Line> {
               }
             }
           }
-        } else if (line.param === 'Match' && 'criteria' in line && match(line.criteria, context)) {
+        } else if (/^match$/i.test(line.param) && 'criteria' in line && match(line.criteria, context)) {
           for (const subline of (line as Section).config) {
             if (subline.type === LineType.DIRECTIVE) {
               setProperty(subline.param, subline.value)
             }
           }
-        } else if (line.param !== 'Host' && line.param !== 'Match') {
+        } else if (!/^(host|match)$/i.test(line.param)) {
           setProperty(line.param, line.value)
         }
       }

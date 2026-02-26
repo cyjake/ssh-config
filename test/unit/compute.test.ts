@@ -300,4 +300,109 @@ describe('compute', function() {
     assert.equal(result.ProxyCommand, '"/foo/bar - baz/proxylauncher.sh" "/some/param with space"')
   })
 
+  describe('compute with ignoreCase', function() {
+    it('.compute with ignoreCase: true should normalize directive names to lowercase', async function() {
+      const config = SSHConfig.parse(`
+        Host example
+          hOsTnaME 1.2.3.4
+          USER admin
+          PoRt 22
+      `)
+
+      const result = config.compute('example', { ignoreCase: true })
+
+      assert.equal(result.hostname, '1.2.3.4')
+      assert.equal(result.user, 'admin')
+      assert.equal(result.port, '22')
+    })
+
+    it('.compute with ignoreCase: true should normalize Host directive to lowercase', async function() {
+      const config = SSHConfig.parse(`
+        HOST example
+          HostName example.com
+      `)
+
+      const result = config.compute('example', { ignoreCase: true })
+
+      assert.equal(result.host, 'example')
+      assert.equal(result.hostname, 'example.com')
+    })
+
+    it('.compute with ignoreCase: true should match HOST case-insensitively', async function() {
+      const config = SSHConfig.parse(`
+        HOST example
+          HostName example.com
+      `)
+
+      const result = config.compute({ Host: 'example' }, { ignoreCase: true })
+
+      assert.ok(result)
+      assert.equal(result.hostname, 'example.com')
+    })
+
+    it('.compute with ignoreCase: true should match Match case-insensitively', async function() {
+      const config = SSHConfig.parse(`
+        MATCH host example
+          HostName example.com
+      `)
+
+      const result = config.compute({ Host: 'example' }, { ignoreCase: true })
+
+      assert.ok(result)
+      assert.equal(result.hostname, 'example.com')
+    })
+
+    it('.compute with ignoreCase: false should preserve original case (default behavior)', async function() {
+      const config = SSHConfig.parse(`
+        Host example
+          hOsTnaME 1.2.3.4
+          USER admin
+      `)
+
+      const result = config.compute('example', { ignoreCase: false })
+
+      assert.equal(result.hOsTnaME, '1.2.3.4')
+      assert.equal(result.USER, 'admin')
+    })
+
+    it('.compute without ignoreCase should preserve original case', async function() {
+      const config = SSHConfig.parse(`
+        Host example
+          hOsTnaME 1.2.3.4
+          USER admin
+      `)
+
+      const result = config.compute('example')
+
+      assert.equal(result.hOsTnaME, '1.2.3.4')
+      assert.equal(result.USER, 'admin')
+    })
+
+    it('.compute with ignoreCase should work with repeatable directives', async function() {
+      const config = SSHConfig.parse(`
+        Host example
+          IDENTITYFILE ~/.ssh/id_rsa
+          IDENTITYFILE ~/.ssh/id_ed25519
+      `)
+
+      const result = config.compute('example', { ignoreCase: true })
+
+      assert.deepEqual(result.identityfile, ['~/.ssh/id_rsa', '~/.ssh/id_ed25519'])
+    })
+
+    it('.compute with ignoreCase should normalize CanonicalizeHostName and CanonicalDomains', async function() {
+      const config = SSHConfig.parse(`
+        Host example
+          CANONICALIZEHOSTNAME yes
+          CANONICALDOMAINS example.com
+      `)
+
+      const result = config.compute('example', { ignoreCase: true })
+
+      assert.equal(result.canonicalizehostname, 'yes')
+      // CanonicalDomains value is a single string, not an array
+      assert.equal(result.canonicaldomains, 'example.com')
+    })
+  })
+
 })
