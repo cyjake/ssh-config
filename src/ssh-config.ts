@@ -1,4 +1,5 @@
 
+import { Buffer } from 'node:buffer'
 import glob from './glob.ts'
 import { spawnSync } from 'node:child_process'
 import os from 'node:os'
