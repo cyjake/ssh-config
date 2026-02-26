@@ -1,3 +1,18 @@
+5.1.0 / 2026-02-26
+==================
+
+## What's Changed
+* feat: support deno by @cyjake in https://github.com/cyjake/ssh-config/pull/98
+* fix: add missing export of LineType.EMPTY by @KnorpelSenf in https://github.com/cyjake/ssh-config/pull/100
+* docs: describe all symbols via TSDoc by @KnorpelSenf in https://github.com/cyjake/ssh-config/pull/101
+* chore(ci): publish from GitHub to JSR by @KnorpelSenf in https://github.com/cyjake/ssh-config/pull/99
+* docs: add shields for JSR and Deno CI by @KnorpelSenf in https://github.com/cyjake/ssh-config/pull/102
+* feat: support Buffer input for parse function by @cyjake in https://github.com/cyjake/ssh-config/pull/104
+* feat: add ignoreCase option to compute() for case-insensitive directive matching by @cyjake in https://github.com/cyjake/ssh-config/pull/105
+
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.0.4...v5.1.0
+
 5.0.4 / 2025-11-16
 ==================
 

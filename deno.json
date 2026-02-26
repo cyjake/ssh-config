@@ -1,6 +1,6 @@
 {
   "name": "@cyjake/ssh-config",
-  "version": "5.0.4",
+  "version": "5.1.0",
   "exports": "./src/ssh-config.ts",
   "imports": {
     "sinon": "npm:sinon@^21.0.0",
