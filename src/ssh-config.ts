@@ -141,6 +141,13 @@ export interface MatchOptions {
 export interface ComputeOptions {
   /** when true, normalizes directive names to lowercase to match OpenSSH behavior */
   ignoreCase?: boolean;
+  /**
+   * Whether to evaluate Match exec criteria.
+   *
+   * Defaults to true for OpenSSH-compatible behavior. Set to false when
+   * computing potentially untrusted config text to avoid shell execution.
+   */
+  matchExec?: boolean;
 }
 
 interface MatchParams {
@@ -153,6 +160,7 @@ interface MatchParams {
 
 interface ComputeContext {
   params: MatchParams;
+  options: Required<ComputeOptions>;
   doFinalPass: boolean;
   inFinalPass: boolean;
 }
@@ -196,6 +204,9 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
         context.doFinalPass = true
         return false
       case 'exec':
+        if (!context.options.matchExec) {
+          return false
+        }
         const command = `function main {
           ${criterion}
         }
@@ -253,17 +264,12 @@ export default class SSHConfig extends Array<Line> {
   /**
    * Query SSH config by host.
    */
-  public compute(host: string): Record<string, string | string[]>;
+  public compute(host: string, options?: ComputeOptions): Record<string, string | string[]>;
 
   /**
    * Query SSH config by host and user.
    */
   public compute(opts: MatchOptions, computeOpts?: ComputeOptions): Record<string, string | string[]>;
-
-  /**
-   * Query SSH config by host with options.
-   */
-  public compute(host: string, computeOpts?: ComputeOptions): Record<string, string | string[]>;
 
   public compute(opts: string | MatchOptions, computeOpts?: ComputeOptions): Record<string, string | string[]> {
     if (typeof opts === 'string') opts = { Host: opts }
@@ -283,6 +289,10 @@ export default class SSHConfig extends Array<Line> {
         OriginalHost: opts.Host,
         User: userInfo.username,
         LocalUser: userInfo.username,
+      },
+      options: {
+        ignoreCase: computeOpts?.ignoreCase === true,
+        matchExec: computeOpts?.matchExec !== false,
       },
       inFinalPass: false,
       doFinalPass: false,

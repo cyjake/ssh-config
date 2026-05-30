@@ -115,6 +115,16 @@ config.compute('example')
 // With ignoreCase - lowercase to match OpenSSH
 config.compute('example', { ignoreCase: true })
 // => { hostname: '1.2.3.4', user: 'admin' }
+
+#### Match Exec
+
+`Match exec` criteria are evaluated by default to match OpenSSH behavior. If
+the config text may be untrusted, pass `{ matchExec: false }` to skip
+`Match exec` sections while still computing `Host` sections and non-exec
+`Match` criteria:
+
+```js
+config.compute('walden', { matchExec: false })
 ```
 
 ### `.find` sections by Host or Match
