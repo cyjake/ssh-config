@@ -161,6 +161,24 @@ describe('compute', function() {
     assert.equal(result.HostName, 'tahoe.local')
   })
 
+  it('.compute can skip Match exec', async function() {
+    const config = SSHConfig.parse(`
+      Host tahoe1
+        User nil
+
+      Match exec "return 0" host tahoe1
+        HostName tahoe.local
+
+      Match host tahoe1
+        Port 2222
+    `)
+    const result = config.compute('tahoe1', { matchExec: false })
+    assert.ok(result)
+    assert.equal(result.User, 'nil')
+    assert.equal(result.HostName, undefined)
+    assert.equal(result.Port, '2222')
+  })
+
   it('.compute by Match host and user', async function() {
     const config = SSHConfig.parse(`
       Match host tahoe1 user foo
