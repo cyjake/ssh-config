@@ -5,7 +5,7 @@
   "author": "Chen Yangjian (https://www.cyj.me)",
   "repository": {
     "type": "git",
-    "url": "git@github.com:cyjake/ssh-config.git"
+    "url": "git+https://github.com/cyjake/ssh-config.git"
   },
   "files": [
     "dist/**",
