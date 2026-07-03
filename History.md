@@ -1,3 +1,16 @@
+5.2.0 / 2026-07-03
+==================
+
+## What's Changed
+* Embed sources in generated source maps by @cyjake in https://github.com/cyjake/ssh-config/pull/109
+* Add option to skip Match exec evaluation by @cyjake in https://github.com/cyjake/ssh-config/pull/108
+* chore: use public repository metadata by @jakerated-r in https://github.com/cyjake/ssh-config/pull/110
+
+## New Contributors
+* @jakerated-r made their first contribution in https://github.com/cyjake/ssh-config/pull/110
+
+**Full Changelog**: https://github.com/cyjake/ssh-config/compare/v5.1.0...v5.2.0
+
 5.1.0 / 2026-02-26
 ==================
 
