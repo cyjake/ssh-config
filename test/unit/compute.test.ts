@@ -318,6 +318,16 @@ describe('compute', function() {
     assert.equal(result.ProxyCommand, '"/foo/bar - baz/proxylauncher.sh" "/some/param with space"')
   })
 
+  it('.compute should preserve KnownHostsCommand arguments', async () => {
+    const config = SSHConfig.parse(`
+      Host *.sbx
+        KnownHostsCommand "/opt/homebrew/bin/sbx" ssh known-hosts %H
+    `)
+
+    const result = config.compute({ Host: 'example.sbx' })
+    assert.equal(result.KnownHostsCommand, '"/opt/homebrew/bin/sbx" ssh known-hosts %H')
+  })
+
   describe('compute with ignoreCase', function() {
     it('.compute with ignoreCase: true should normalize directive names to lowercase', async function() {
       const config = SSHConfig.parse(`
