@@ -7,7 +7,8 @@ import os from 'node:os'
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|Match|CanonicalDomains)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|KnownHostsCommand|Match|CanonicalDomains)$/i
+const RE_COMMAND_DIRECTIVE = /^(ProxyCommand|KnownHostsCommand)$/i
 const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
@@ -303,7 +304,7 @@ export default class SSHConfig extends Array<Line> {
       const key = computeOpts?.ignoreCase ? name.toLowerCase() : name
       let val: string | string[]
       if (Array.isArray(value)) {
-        if (/ProxyCommand/i.test(key)) {
+        if (RE_COMMAND_DIRECTIVE.test(key)) {
           val = value.map(({ val, separator, quoted }) => {
             return `${separator}${quoted ? `"${val.replace(/"/g, '\\"')}"` : val}`
           }).join('').trim()

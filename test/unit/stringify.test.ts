@@ -167,6 +167,18 @@ describe('stringify', function() {
     `)
   })
 
+  it('.stringify KnownHostsCommand with a quoted executable', function() {
+    const config = parse(`
+      Host *.sbx
+        KnownHostsCommand "/opt/homebrew/bin/sbx" ssh known-hosts %H
+    `)
+
+    assert.equal(stringify(config), `
+      Host *.sbx
+        KnownHostsCommand "/opt/homebrew/bin/sbx" ssh known-hosts %H
+    `)
+  })
+
   it('.stringify Match with criteria', function() {
     const config = parse(`
       Match host foo final exec "return 0"
