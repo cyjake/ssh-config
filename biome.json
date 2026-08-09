@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**/*.ts", "!**/*.d.ts"]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "none",
+      "correctness": {
+        "noInvalidUseBeforeDeclaration": "error",
+        "noUndeclaredVariables": "error",
+        "noUnusedVariables": "error"
+      }
+    }
+  },
+  "assist": {
+    "enabled": false
+  }
+}

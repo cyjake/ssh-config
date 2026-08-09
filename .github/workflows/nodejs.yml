@@ -25,44 +25,50 @@ jobs:
           node-version: 24.x
       - run: npm install
       - run: npm run lint
+      - run: npm run build
+      - run: npm run test:coverage
+      - run: npm run test:legacy
+      - run: npm run test:exports
       - run: npm run test:package
+      - name: Prepare compatibility package
+        run: |
+          mkdir compatibility-package
+          npm pack --pack-destination compatibility-package
+          cp test/package-exports.cjs compatibility-package/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-package
+          path: compatibility-package
+          retention-days: 1
+      - name: Upload coverage
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   compatibility:
-    name: Node ${{ matrix.node-version }} (${{ matrix.suite }})
+    name: Node ${{ matrix.node-version }} package
+    needs: quality
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - node-version: 14.x
-            suite: legacy
-          - node-version: 16.x
-            suite: legacy
-          - node-version: 18.x
-            suite: legacy
-          - node-version: 20.x
-            suite: legacy
-          - node-version: 22.x
-            suite: modern
-          - node-version: 24.x
-            suite: modern
+        node-version:
+          - 14.13.1
+          - 16.x
+          - 18.x
+          - 20.x
+          - 22.x
+          - 24.x
     steps:
-      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install
-      - run: npm run build
-      - name: Run legacy suite
-        if: matrix.suite == 'legacy'
-        run: npm run test:legacy:coverage
-      - name: Run modern suite
-        if: matrix.suite == 'modern'
-        run: npm run test:coverage
-      - name: Test CommonJS and ESM exports
-        run: npm run test:exports
-      - name: Upload coverage
-        if: matrix.node-version == '24.x'
-        uses: codecov/codecov-action@v7
+      - uses: actions/download-artifact@v8
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: compatibility-package
+          path: compatibility-package
+      - run: npm init --yes
+      - name: Install packed package without development dependencies
+        run: npm install --ignore-scripts --no-package-lock ./compatibility-package/ssh-config-*.tgz
+      - name: Test CommonJS and ESM exports
+        run: node compatibility-package/package-exports.cjs

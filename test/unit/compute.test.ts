@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert'
+import { afterEach, describe, it } from 'node:test'
 import SSHConfig from '../../src/ssh-config.ts'
 import os from 'node:os'
 import sinon from 'sinon'

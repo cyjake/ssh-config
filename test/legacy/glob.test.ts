@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert'
+import { describe, it } from 'node:test'
 import { glob } from '../../dist/ssh-config.js'
 
 describe('glob', function() {
