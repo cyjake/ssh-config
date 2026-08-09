@@ -68,7 +68,10 @@ jobs:
           name: compatibility-package
           path: compatibility-package
       - run: npm init --yes
+        working-directory: compatibility-package
       - name: Install packed package without development dependencies
-        run: npm install --ignore-scripts --no-package-lock ./compatibility-package/ssh-config-*.tgz
+        working-directory: compatibility-package
+        run: npm install --ignore-scripts --no-package-lock ./ssh-config-*.tgz
       - name: Test CommonJS and ESM exports
-        run: node compatibility-package/package-exports.cjs
+        working-directory: compatibility-package
+        run: node package-exports.cjs
