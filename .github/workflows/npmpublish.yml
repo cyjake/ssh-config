@@ -1,32 +1,100 @@
-name: Node.js Package
+name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [master]
+  workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
+
+concurrency:
+  group: release-master
+  cancel-in-progress: false
 
 jobs:
-  build:
+  release-please:
+    name: Prepare release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      created: ${{ steps.release.outputs.release_created }}
+      sha: ${{ steps.release.outputs.sha }}
+      tag: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  verify-release:
+    name: Verify release
+    if: needs.release-please.outputs.created == 'true'
+    needs: release-please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24.x
+      - uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: v2.x
+          cache: true
       - run: npm install
-      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run test:coverage
+      - run: npm run test:legacy
+      - run: npm run test:exports
+      - run: npm run test:package
+      - run: deno task test
+      - run: deno publish --dry-run
+      - run: npm run release:check
+        env:
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag }}
 
   publish-npm:
-    needs: build
+    name: Publish npm
+    if: needs.release-please.outputs.created == 'true'
+    needs: [release-please, verify-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24.x
           registry-url: https://registry.npmjs.org/
       - run: npm install
       - run: npm publish --provenance --access public
+
+  publish-jsr:
+    name: Publish JSR
+    if: needs.release-please.outputs.created == 'true'
+    needs: [release-please, verify-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
+      - uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: v2.x
+          cache: true
+      - run: deno publish

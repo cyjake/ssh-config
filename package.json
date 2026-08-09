@@ -7,6 +7,7 @@
     "type": "git",
     "url": "git+https://github.com/cyjake/ssh-config.git"
   },
+  "types": "./lib/ssh-config.d.ts",
   "files": [
     "dist/**",
     "lib/**"
@@ -28,20 +29,26 @@
   "scripts": {
     "lint": "eslint --ext ts .",
     "lint:fix": "eslint --ext ts --fix .",
-    "build": "tsc && tsc -p tsconfig.cjs.json",
+    "build": "tsc && tsc -p tsconfig.cjs.json && node scripts/write-package-metadata.cjs",
     "prepack": "npm run build",
     "pretest": "npm run build",
     "test": "mocha --spec test/unit/**/*.test.ts --node-option=experimental-transform-types",
     "test:coverage": "nyc mocha --spec test/unit/**/*.test.ts --node-option=experimental-transform-types && nyc report --reporter=lcov",
     "test:legacy": "TS_NODE_PROJECT=./tsconfig.cjs.json mocha --spec test/legacy/**/*.test.ts",
-    "test:legacy:coverage": "TS_NODE_PROJECT=./tsconfig.cjs.json nyc mocha --spec test/legacy/**/*.test.ts && nyc report --reporter=lcov"
+    "test:legacy:coverage": "TS_NODE_PROJECT=./tsconfig.cjs.json nyc mocha --spec test/legacy/**/*.test.ts && nyc report --reporter=lcov",
+    "test:exports": "node test/package-exports.cjs",
+    "test:package": "node scripts/test-package.mjs",
+    "release:check": "node scripts/check-release.mjs"
   },
   "main": "dist/ssh-config.js",
   "exports": {
-    "import": "./lib/ssh-config.js",
-    "require": "./dist/ssh-config.js"
+    ".": {
+      "types": "./lib/ssh-config.d.ts",
+      "import": "./lib/ssh-config.js",
+      "require": "./dist/ssh-config.js"
+    }
   },
-  "engine": {
+  "engines": {
     "node": ">= 14.13.1"
   },
   "license": "MIT"
