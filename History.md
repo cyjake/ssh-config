@@ -1,3 +1,12 @@
+# Changelog
+
+## [5.2.1](https://github.com/cyjake/ssh-config/compare/v5.2.0...v5.2.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* preserve KnownHostsCommand arguments ([#113](https://github.com/cyjake/ssh-config/issues/113)) ([4282276](https://github.com/cyjake/ssh-config/commit/4282276dd0bc187dab66c8f872c910fa0adc2672))
+
 5.2.0 / 2026-07-03
 ==================
 
@@ -373,4 +382,3 @@ This is a breaking change. The parse result is now a subclass of Array instead o
 
  * Init repo
  * Implemented `.parse` and `.stringify`
-
