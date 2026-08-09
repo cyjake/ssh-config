@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert'
+import { describe, it } from 'node:test'
 import { SSHConfig, type Line } from '../../dist/ssh-config.js'
 import { heredoc, readFixture } from '../helpers.cjs'
 
