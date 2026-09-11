@@ -356,4 +356,33 @@ describe('parse', function() {
     assert.equal(config[0].type, LineType.DIRECTIVE)
     assert.equal(config[0].value, 'name#with#hash')
   })
+
+  // https://github.com/cyjake/ssh-config/issues/120
+  it('.parse Include with multiple paths', function() {
+    const config = parse('Include ~/.ssh/configs/* ~/.ssh/other')
+    assert.equal(config[0].type, DIRECTIVE)
+    assert.equal(config[0].param, 'Include')
+    assert.deepEqual(config[0].value, [
+      { val: '~/.ssh/configs/*', separator: ' ', quoted: false },
+      { val: '~/.ssh/other', separator: ' ', quoted: false },
+    ])
+    assert.equal(SSHConfig.stringify(config), 'Include ~/.ssh/configs/* ~/.ssh/other')
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/120
+  it('.parse Include with quoted paths', function() {
+    const config = parse('Include "~/spaced folder/first" "~/second"')
+    assert.deepEqual(config[0].value, [
+      { val: '~/spaced folder/first', separator: ' ', quoted: true },
+      { val: '~/second', separator: ' ', quoted: true },
+    ])
+    assert.equal(SSHConfig.stringify(config), 'Include "~/spaced folder/first" "~/second"')
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/120
+  it('.parse Include with single path keeps string value', function() {
+    const config = parse('Include "~/.ssh/my config"')
+    assert.equal(config[0].value, '~/.ssh/my config')
+    assert.equal(SSHConfig.stringify(config), 'Include "~/.ssh/my config"')
+  })
 })
