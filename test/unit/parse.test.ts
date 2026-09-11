@@ -379,6 +379,17 @@ describe('parse', function() {
     assert.equal(SSHConfig.stringify(config), 'Include "~/spaced folder/first" "~/second"')
   })
 
+  it('.parse directive value with trailing comment', function() {
+    const config = parse(`
+      Host example
+        HostName example.com # trailing comment
+    `)
+    const section = config.find((line: Line) => line.type === DIRECTIVE && line.param === 'Host')
+    assert.ok(section && 'config' in section)
+    const hostname = section.config.find((line: Line) => line.type === DIRECTIVE && line.param === 'HostName')
+    assert.equal(hostname?.value, 'example.com')
+  })
+
   // https://github.com/cyjake/ssh-config/issues/120
   it('.parse Include with single path keeps string value', function() {
     const config = parse('Include "~/.ssh/my config"')
