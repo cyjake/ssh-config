@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.0](https://github.com/cyjake/ssh-config/compare/v5.2.1...v5.3.0) (2026-09-11)
+
+
+### Features
+
+* tokenize Include directives with multiple paths ([#121](https://github.com/cyjake/ssh-config/issues/121)) ([8b774d7](https://github.com/cyjake/ssh-config/commit/8b774d79d1b1401484a3abc0b6eb7cd264ca7c40))
+
 ## [5.2.1](https://github.com/cyjake/ssh-config/compare/v5.2.0...v5.2.1) (2026-08-09)
 
 
