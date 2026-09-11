@@ -7,9 +7,9 @@ import os from 'node:os'
 const RE_SPACE = /\s/
 const RE_LINE_BREAK = /\r|\n/
 const RE_SECTION_DIRECTIVE = /^(Host|Match)$/i
-const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|KnownHostsCommand|Match|CanonicalDomains)$/i
+const RE_MULTI_VALUE_DIRECTIVE = /^(GlobalKnownHostsFile|Host|IPQoS|SendEnv|UserKnownHostsFile|ProxyCommand|KnownHostsCommand|Match|CanonicalDomains|Include)$/i
 const RE_COMMAND_DIRECTIVE = /^(ProxyCommand|KnownHostsCommand)$/i
-const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User)$/i
+const RE_QUOTE_DIRECTIVE = /^(?:CertificateFile|IdentityFile|IdentityAgent|User|Include)$/i
 const RE_SINGLE_LINE_DIRECTIVE = /^(Include|IdentityFile)$/i
 
 /**
