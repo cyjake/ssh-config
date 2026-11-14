@@ -1,7 +1,7 @@
 
 import { strict as assert } from 'node:assert'
 import { describe, it } from 'node:test'
-import { SSHConfig, parse, stringify } from '../../src/ssh-config.ts'
+import { type Directive, type Section, SSHConfig, parse, stringify } from '../../src/ssh-config.ts'
 import { readFixture } from '../helpers.ts'
 
 describe('stringify', function() {
@@ -211,5 +211,26 @@ describe('stringify', function() {
         ProxyCommand ssh -i ~/.ssh/id_rsa -W %h:%p -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null XXX@ZZZ
         User XXX
     `)
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/125
+  it('.stringify retains spaces before trailing comments', function() {
+    const src = 'Host web # prod box\n  IdentityFile ~/.ssh/id_web # deploy key\n'
+    const config = parse(src)
+    assert.equal(stringify(config), src)
+    // the stringified output reparses to the same config
+    assert.deepEqual(parse(stringify(config)).compute('web'), config.compute('web'))
+    assert.equal(parse(stringify(config)).compute('web').Host, 'web')
+  })
+
+  // https://github.com/cyjake/ssh-config/issues/125
+  it('.stringify escapes double quotes inside quoted values', function() {
+    const src = 'Host web\n  User "a\\"b"\n'
+    const config = parse(src)
+    assert.equal(config[0].type, SSHConfig.DIRECTIVE)
+    assert.equal((config[0] as Section).config[0].type, SSHConfig.DIRECTIVE)
+    assert.equal(((config[0] as Section).config[0] as Directive).value, 'a"b')
+    assert.equal(stringify(config), src)
+    assert.equal(parse(stringify(config)).compute('web').User, 'a"b')
   })
 })

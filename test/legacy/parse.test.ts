@@ -323,7 +323,7 @@ describe('parse', function() {
       all: [],
     })
     assert.deepEqual(match.config.find((entry: Line) => 'param' in entry && entry.param === 'Include'), {
-      after: '',
+      after: ' # CLOUDFLARE SETUP\n    ',
       before: '        ',
       param: 'Include',
       separator: ' ',

@@ -617,10 +617,15 @@ export function parse(text: string | Buffer): SSHConfig {
     return (sep + space()) as Separator
   }
 
+  // whitespace right before a trailing `#` comment, kept so that stringify
+  // can reproduce the comment where it was
+  let trailingSpace = ''
+
   function value() {
     let val = ''
     let quoted = false
     let escaped = false
+    trailingSpace = ''
 
     while (chr && !RE_LINE_BREAK.test(chr)) {
       // backslash escapes only double quotes
@@ -648,6 +653,7 @@ export function parse(text: string | Buffer): SSHConfig {
       throw new Error(`Unexpected line break at ${val}`)
     }
 
+    trailingSpace = val.match(/[ \t]*$/)?.[0] || ''
     return val.trim()
   }
 
@@ -676,21 +682,28 @@ export function parse(text: string | Buffer): SSHConfig {
     // whether current context is within quotations or not
     let quoted = false
     let escaped = false
+    // spaces after the last complete value
+    let spacesAfterValue = ''
+    trailingSpace = ''
 
     while (chr && !RE_LINE_BREAK.test(chr)) {
       if (escaped) {
         val += chr === '"' ? chr : `\\${chr}`
         escaped = false
+        spacesAfterValue = ''
       }
       else if (chr === '"') {
         quoted = !quoted
+        spacesAfterValue = ''
       }
       else if (chr === '\\') {
         escaped = true
+        spacesAfterValue = ''
       }
       else if (quoted) {
         val += chr
         valQuoted = true
+        spacesAfterValue = ''
       }
       else if (/[ \t=]/.test(chr)) {
         if (val) {
@@ -698,14 +711,21 @@ export function parse(text: string | Buffer): SSHConfig {
           val = ''
           valQuoted = false
           valSeparator = chr
+          spacesAfterValue = ''
         }
-        // otherwise ignore the space
+        else {
+          // spaces between the last value and a potential trailing `#` comment
+          spacesAfterValue += chr
+        }
       }
       else if (chr === '#' && results.length > 0) {
+        // the separator that ended the previous value also precedes the `#`
+        trailingSpace = val ? spacesAfterValue : valSeparator + spacesAfterValue
         break
       }
       else {
         val += chr
+        spacesAfterValue = ''
       }
 
       chr = next()
@@ -733,6 +753,13 @@ export function parse(text: string | Buffer): SSHConfig {
       after: '',
     }
     if (!result.quoted) delete result.quoted
+
+    // a `#` comment trailing the value on the same line, kept in `after` so
+    // that stringify can reproduce it verbatim
+    if (chr === '#') {
+      result.after = trailingSpace + comment().content
+    }
+
     if (/^Match$/i.test(param)) {
       const criteria: Match['criteria'] = {}
 
@@ -771,7 +798,7 @@ export function parse(text: string | Buffer): SSHConfig {
     const after = linebreak()
 
     node.before = before
-    node.after = after
+    node.after += after
 
     return node
   }
@@ -818,7 +845,9 @@ export function stringify(config: SSHConfig): string {
       }
       return result
     }
-    return quoted ? `"${value}"` : value
+    // escape `"` so that the value round-trips through parse, mirroring how
+    // parse unescapes `\"` inside quoted values
+    return quoted ? `"${value.replace(/"/g, '\\"')}"` : value
   }
 
   function formatDirective(line: Directive) {
