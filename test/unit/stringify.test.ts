@@ -221,6 +221,9 @@ describe('stringify', function() {
     // the stringified output reparses to the same config
     assert.deepEqual(parse(stringify(config)).compute('web'), config.compute('web'))
     assert.equal(parse(stringify(config)).compute('web').Host, 'web')
+    // whitespace before the comment is preserved exactly
+    const spaced = 'Host web  \t# prod box\n'
+    assert.equal(stringify(parse(spaced)), spaced)
   })
 
   // https://github.com/cyjake/ssh-config/issues/125

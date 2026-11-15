@@ -653,7 +653,7 @@ export function parse(text: string | Buffer): SSHConfig {
       throw new Error(`Unexpected line break at ${val}`)
     }
 
-    trailingSpace = val.match(/[ \t]*$/)?.[0] || ''
+    trailingSpace = val.slice(val.trimEnd().length)
     return val.trim()
   }
 
@@ -711,16 +711,13 @@ export function parse(text: string | Buffer): SSHConfig {
           val = ''
           valQuoted = false
           valSeparator = chr
-          spacesAfterValue = ''
         }
-        else {
-          // spaces between the last value and a potential trailing `#` comment
-          spacesAfterValue += chr
-        }
+        // spaces after the last complete value, kept for a potential trailing
+        // `#` comment; reset as soon as another value starts
+        spacesAfterValue += chr
       }
       else if (chr === '#' && results.length > 0) {
-        // the separator that ended the previous value also precedes the `#`
-        trailingSpace = val ? spacesAfterValue : valSeparator + spacesAfterValue
+        trailingSpace = spacesAfterValue
         break
       }
       else {
