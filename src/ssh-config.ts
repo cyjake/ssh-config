@@ -457,7 +457,9 @@ export default class SSHConfig extends Array<Line> {
     let configWas = this
 
     let lastLine = config.length > 0 ? config[config.length - 1] : lastEntry
-    if (lastLine && !lastLine.after) lastLine.after = '\n'
+    // terminate the last line before appending; `after` may hold a trailing
+    // `#` comment without a line break when the input ends at EOF
+    if (lastLine && !RE_LINE_BREAK.test(lastLine.after)) lastLine.after += '\n'
 
     let sectionLineFound = config !== configWas
 
@@ -476,9 +478,10 @@ export default class SSHConfig extends Array<Line> {
         sectionLineFound = true
         line.before = indent.replace(/  |\t/, '')
         config = configWas
-        // separate sections with an extra newline
+        // separate sections with an extra newline; the previous line may end
+        // with a trailing `#` comment before its line break
         // https://github.com/cyjake/ssh-config/issues/23#issuecomment-564768248
-        if (lastLine && lastLine.after === '\n') lastLine.after += '\n'
+        if (lastLine && (lastLine.after === '\n' || /[^\r\n]\r?\n$/.test(lastLine.after))) lastLine.after += '\n'
         config.push(line)
         config = (line as Section).config = new SSHConfig()
       } else {
@@ -617,10 +620,15 @@ export function parse(text: string | Buffer): SSHConfig {
     return (sep + space()) as Separator
   }
 
+  // whitespace right before a trailing `#` comment, kept so that stringify
+  // can reproduce the comment where it was
+  let trailingSpace = ''
+
   function value() {
     let val = ''
     let quoted = false
     let escaped = false
+    trailingSpace = ''
 
     while (chr && !RE_LINE_BREAK.test(chr)) {
       // backslash escapes only double quotes
@@ -648,6 +656,7 @@ export function parse(text: string | Buffer): SSHConfig {
       throw new Error(`Unexpected line break at ${val}`)
     }
 
+    trailingSpace = val.slice(val.trimEnd().length)
     return val.trim()
   }
 
@@ -676,21 +685,28 @@ export function parse(text: string | Buffer): SSHConfig {
     // whether current context is within quotations or not
     let quoted = false
     let escaped = false
+    // spaces after the last complete value
+    let spacesAfterValue = ''
+    trailingSpace = ''
 
     while (chr && !RE_LINE_BREAK.test(chr)) {
       if (escaped) {
         val += chr === '"' ? chr : `\\${chr}`
         escaped = false
+        spacesAfterValue = ''
       }
       else if (chr === '"') {
         quoted = !quoted
+        spacesAfterValue = ''
       }
       else if (chr === '\\') {
         escaped = true
+        spacesAfterValue = ''
       }
       else if (quoted) {
         val += chr
         valQuoted = true
+        spacesAfterValue = ''
       }
       else if (/[ \t=]/.test(chr)) {
         if (val) {
@@ -699,13 +715,17 @@ export function parse(text: string | Buffer): SSHConfig {
           valQuoted = false
           valSeparator = chr
         }
-        // otherwise ignore the space
+        // spaces after the last complete value, kept for a potential trailing
+        // `#` comment; reset as soon as another value starts
+        spacesAfterValue += chr
       }
       else if (chr === '#' && results.length > 0) {
+        trailingSpace = spacesAfterValue
         break
       }
       else {
         val += chr
+        spacesAfterValue = ''
       }
 
       chr = next()
@@ -733,6 +753,13 @@ export function parse(text: string | Buffer): SSHConfig {
       after: '',
     }
     if (!result.quoted) delete result.quoted
+
+    // a `#` comment trailing the value on the same line, kept in `after` so
+    // that stringify can reproduce it verbatim
+    if (chr === '#') {
+      result.after = trailingSpace + comment().content
+    }
+
     if (/^Match$/i.test(param)) {
       const criteria: Match['criteria'] = {}
 
@@ -771,7 +798,7 @@ export function parse(text: string | Buffer): SSHConfig {
     const after = linebreak()
 
     node.before = before
-    node.after = after
+    node.after += after
 
     return node
   }
@@ -818,7 +845,9 @@ export function stringify(config: SSHConfig): string {
       }
       return result
     }
-    return quoted ? `"${value}"` : value
+    // escape `"` so that the value round-trips through parse, mirroring how
+    // parse unescapes `\"` inside quoted values
+    return quoted ? `"${value.replace(/"/g, '\\"')}"` : value
   }
 
   function formatDirective(line: Directive) {
