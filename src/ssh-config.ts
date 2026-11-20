@@ -457,7 +457,9 @@ export default class SSHConfig extends Array<Line> {
     let configWas = this
 
     let lastLine = config.length > 0 ? config[config.length - 1] : lastEntry
-    if (lastLine && !lastLine.after) lastLine.after = '\n'
+    // terminate the last line before appending; `after` may hold a trailing
+    // `#` comment without a line break when the input ends at EOF
+    if (lastLine && !RE_LINE_BREAK.test(lastLine.after)) lastLine.after += '\n'
 
     let sectionLineFound = config !== configWas
 
@@ -476,9 +478,10 @@ export default class SSHConfig extends Array<Line> {
         sectionLineFound = true
         line.before = indent.replace(/  |\t/, '')
         config = configWas
-        // separate sections with an extra newline
+        // separate sections with an extra newline; the previous line may end
+        // with a trailing `#` comment before its line break
         // https://github.com/cyjake/ssh-config/issues/23#issuecomment-564768248
-        if (lastLine && lastLine.after === '\n') lastLine.after += '\n'
+        if (lastLine && (lastLine.after === '\n' || /[^\r\n]\r?\n$/.test(lastLine.after))) lastLine.after += '\n'
         config.push(line)
         config = (line as Section).config = new SSHConfig()
       } else {

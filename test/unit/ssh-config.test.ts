@@ -221,6 +221,27 @@ describe('SSHConfig', function() {
     `))
   })
 
+  // https://github.com/cyjake/ssh-config/pull/126#discussion_r4577207285
+  it('.append to config that ends with a trailing comment', function() {
+    const config = SSHConfig.parse('Host web\n  User bob # deploy')
+    config.append({
+      Host: 'db',
+      User: 'alice'
+    })
+
+    assert.equal(config.toString(), heredoc(`
+      Host web
+        User bob # deploy
+
+      Host db
+        User alice
+    `))
+    // the appended section survives a reparse
+    const reparsed = SSHConfig.parse(config.toString())
+    assert.equal(reparsed.compute('db').User, 'alice')
+    assert.equal(reparsed.compute('web').User, 'bob')
+  })
+
   it('.compute with properties with multiple values', async function() {
     const config = SSHConfig.parse(`
       Host myHost
