@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.1](https://github.com/cyjake/ssh-config/compare/v5.3.0...v5.3.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* stringify preserves trailing comments and escapes quotes ([#126](https://github.com/cyjake/ssh-config/issues/126)) ([f65a6b6](https://github.com/cyjake/ssh-config/commit/f65a6b6ecddf88acaee74efffc8cb12c4df08887))
+
 ## [5.3.0](https://github.com/cyjake/ssh-config/compare/v5.2.1...v5.3.0) (2026-09-11)
 
 
