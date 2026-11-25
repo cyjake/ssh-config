@@ -264,6 +264,39 @@ describe('compute', function() {
     assert.equal(config.compute({ Host: 'tahoe2', User: 'bar' }).ProxyJump, undefined)
   })
 
+  it('.compute by repeated Match criteria', async function() {
+    const config = SSHConfig.parse(`
+      Match !user foo !user bar
+        ProxyJump proxy.com
+
+      Match host tahoe* host *1
+        Port 1022
+    `)
+    assert.equal(config.compute({ Host: 'tahoe1', User: 'foo' }).ProxyJump, undefined)
+    assert.equal(config.compute({ Host: 'tahoe1', User: 'bar' }).ProxyJump, undefined)
+    assert.equal(config.compute({ Host: 'tahoe1', User: 'baz' }).ProxyJump, 'proxy.com')
+    assert.equal(config.compute('tahoe1').Port, '1022')
+    assert.equal(config.compute('tahoe2').Port, undefined)
+    assert.equal(config.compute('other1').Port, undefined)
+  })
+
+  it('.compute by Match exec in sh', async function() {
+    const config = SSHConfig.parse(`
+      Match exec "true"
+        HostName tahoe.com
+
+      Match !exec "true"
+        Port 1022
+
+      Match !exec "kill -9 $$"
+        Compression yes
+    `)
+    const result = config.compute('tahoe1')
+    assert.equal(result.HostName, 'tahoe.com')
+    assert.equal(result.Port, undefined)
+    assert.equal(result.Compression, undefined)
+  })
+
   it('.compute can skip negated Match exec', async function() {
     const config = SSHConfig.parse(`
       Match !exec "return 1" host tahoe1
