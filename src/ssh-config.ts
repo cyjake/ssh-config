@@ -206,7 +206,7 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
         return false
       case 'exec':
         if (!context.options.matchExec) {
-          return false
+          return undefined
         }
         const command = `function main {
           ${criterion}
@@ -228,7 +228,11 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
     const criterion = criteria[key]
     const values = Array.isArray(criterion) ? criterion.map(({ val }) => val) : criterion
 
-    if (!testCriterion(key, values)) {
+    const negated = key.startsWith('!')
+    const result = testCriterion(negated ? key.slice(1) : key, values)
+
+    // criteria that can't be tested never match, negated or not
+    if (result === undefined || result === negated) {
       return false
     }
   }
@@ -300,6 +304,7 @@ export default class SSHConfig extends Array<Line> {
     }
 
     const obj: Record<string, string | string[]> = {}
+    const resolved = new Set<string>()
     const setProperty = (name: string, value: string | { val: string, separator: string, quoted?: boolean }[]) => {
       const key = computeOpts?.ignoreCase ? name.toLowerCase() : name
       let val: string | string[]
@@ -321,11 +326,14 @@ export default class SSHConfig extends Array<Line> {
         const list = (obj[key] || (obj[key] = [])) as string[]
         list.push(...([] as string[]).concat(val))
       } else if (obj[key] == null) {
-        if (name === 'HostName') {
+        // the first HostName or User wins, no matter how it is spelled
+        const param = name.toLowerCase()
+        if (param === 'hostname' && !resolved.has(param)) {
           context.params.HostName = val0
-        } else if (name === 'User') {
+        } else if (param === 'user' && !resolved.has(param)) {
           context.params.User = val0
         }
+        resolved.add(param)
         obj[key] = val
       }
     }
@@ -771,7 +779,7 @@ export function parse(text: string | Buffer): SSHConfig {
       while (i < result.value.length) {
         const { val: keyword } = result.value[i]
 
-        switch (keyword.toLowerCase()) {
+        switch (keyword.toLowerCase().replace(/^!/, '')) {
           case 'all':
           case 'canonical':
           case 'final':

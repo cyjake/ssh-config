@@ -224,6 +224,55 @@ describe('compute', function() {
     assert.equal(result.ProxyJump, 'proxy.com')
   })
 
+  it('.compute by Match with lowercase hostname and user', async function() {
+    const config = SSHConfig.parse(`
+      Host tahoe
+        hostname tahoe.com
+        user jane
+
+      Match host tahoe.com user jane
+        ProxyJump proxy.com
+
+      Match user bar
+        ProxyJump wrong.proxy.com
+    `)
+    assert.equal(config.compute('tahoe').ProxyJump, 'proxy.com')
+    // the first one wins
+    assert.equal(config.compute({ Host: 'tahoe', User: 'bar' }).ProxyJump, 'wrong.proxy.com')
+  })
+
+  it('.compute by negated Match criteria', async function() {
+    const config = SSHConfig.parse(`
+      Match !host tahoe1 user foo
+        ProxyJump not-tahoe1.proxy.com
+
+      Match host tahoe* !host tahoe2
+        ProxyJump tahoe1.proxy.com
+
+      Match !final
+        Port 1022
+
+      Match !tagged foo
+        Compression yes
+    `)
+    const result = config.compute({ Host: 'tahoe1', User: 'foo' })
+    assert.equal(result.ProxyJump, 'tahoe1.proxy.com')
+    assert.equal(result.Port, '1022')
+    // not supported
+    assert.equal(result.Compression, undefined)
+    assert.equal(config.compute({ Host: 'tahoe2', User: 'foo' }).ProxyJump, 'not-tahoe1.proxy.com')
+    assert.equal(config.compute({ Host: 'tahoe2', User: 'bar' }).ProxyJump, undefined)
+  })
+
+  it('.compute can skip negated Match exec', async function() {
+    const config = SSHConfig.parse(`
+      Match !exec "return 1" host tahoe1
+        HostName tahoe.com
+    `)
+    assert.equal(config.compute('tahoe1').HostName, 'tahoe.com')
+    assert.equal(config.compute('tahoe1', { matchExec: false }).HostName, undefined)
+  })
+
   it('.compute with Match final does second pass with HostName', async function() {
     const config = SSHConfig.parse(`
       Match final
