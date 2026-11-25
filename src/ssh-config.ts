@@ -193,7 +193,33 @@ function getIndent(config: SSHConfig) {
   return '  '
 }
 
-function match(criteria: Match['criteria'], context: ComputeContext): boolean {
+/** Split the value of a Match directive into its criteria, in order */
+function parseCriteria(value: Directive['value']): [keyword: string, criterion: string | string[]][] {
+  const values = typeof value === 'string' ? [value] : value.map(({ val }) => val)
+  const result: [string, string | string[]][] = []
+
+  for (let i = 0; i < values.length; i++) {
+    const keyword = values[i]
+
+    switch (keyword.toLowerCase().replace(/^!/, '')) {
+      case 'all':
+      case 'canonical':
+      case 'final':
+        result.push([keyword, []])
+        break
+      default:
+        if (i + 1 >= values.length) {
+          throw new Error(`Missing value for match criteria ${keyword}`)
+        }
+        result.push([keyword, values[++i]])
+        break
+    }
+  }
+
+  return result
+}
+
+function match(line: Match, context: ComputeContext): boolean {
   const testCriterion = (key: string, criterion: string | string[]) => {
     switch (key.toLowerCase()) {
       case 'all':
@@ -206,13 +232,14 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
         return false
       case 'exec':
         if (!context.options.matchExec) {
-          return false
+          return undefined
         }
-        const command = `function main {
+        const command = `main() {
           ${criterion}
         }
         main`
-        return spawnSync(command, { shell: true }).status === 0
+        const { status } = spawnSync(command, { shell: true })
+        return status === null ? undefined : status === 0
       case 'host':
         return glob(criterion, context.params.HostName)
       case 'originalhost':
@@ -224,11 +251,13 @@ function match(criteria: Match['criteria'], context: ComputeContext): boolean {
     }
   }
 
-  for (const key in criteria) {
-    const criterion = criteria[key]
-    const values = Array.isArray(criterion) ? criterion.map(({ val }) => val) : criterion
+  // not `line.criteria`, which can't hold the same criterion twice
+  for (const [keyword, criterion] of parseCriteria(line.value)) {
+    const negated = keyword.startsWith('!')
+    const result = testCriterion(negated ? keyword.slice(1) : keyword, criterion)
 
-    if (!testCriterion(key, values)) {
+    // criteria that can't be tested never match, negated or not
+    if (result === undefined || result === negated) {
       return false
     }
   }
@@ -300,6 +329,7 @@ export default class SSHConfig extends Array<Line> {
     }
 
     const obj: Record<string, string | string[]> = {}
+    const resolved = new Set<string>()
     const setProperty = (name: string, value: string | { val: string, separator: string, quoted?: boolean }[]) => {
       const key = computeOpts?.ignoreCase ? name.toLowerCase() : name
       let val: string | string[]
@@ -321,11 +351,14 @@ export default class SSHConfig extends Array<Line> {
         const list = (obj[key] || (obj[key] = [])) as string[]
         list.push(...([] as string[]).concat(val))
       } else if (obj[key] == null) {
-        if (name === 'HostName') {
+        // the first HostName or User wins, no matter how it is spelled
+        const param = name.toLowerCase()
+        if (param === 'hostname' && !resolved.has(param)) {
           context.params.HostName = val0
-        } else if (name === 'User') {
+        } else if (param === 'user' && !resolved.has(param)) {
           context.params.User = val0
         }
+        resolved.add(param)
         obj[key] = val
       }
     }
@@ -366,7 +399,7 @@ export default class SSHConfig extends Array<Line> {
               }
             }
           }
-        } else if (/^match$/i.test(line.param) && 'criteria' in line && match(line.criteria, context)) {
+        } else if (/^match$/i.test(line.param) && 'criteria' in line && match(line, context)) {
           for (const subline of (line as Section).config) {
             if (subline.type === LineType.DIRECTIVE) {
               setProperty(subline.param, subline.value)
@@ -761,33 +794,11 @@ export function parse(text: string | Buffer): SSHConfig {
     }
 
     if (/^Match$/i.test(param)) {
-      const criteria: Match['criteria'] = {}
-
       if (typeof result.value === 'string') {
         result.value = [{ val: result.value, separator: '', quoted: result.quoted }]
       }
 
-      let i = 0
-      while (i < result.value.length) {
-        const { val: keyword } = result.value[i]
-
-        switch (keyword.toLowerCase()) {
-          case 'all':
-          case 'canonical':
-          case 'final':
-            criteria[keyword] = []
-            i += 1
-            break
-          default:
-            if (i + 1 >= result.value.length) {
-              throw new Error(`Missing value for match criteria ${keyword}`)
-            }
-            criteria[keyword] = result.value[i + 1].val
-            i += 2
-            break
-        }
-      }
-      (result as Match).criteria = criteria
+      (result as Match).criteria = Object.fromEntries(parseCriteria(result.value)) as Match['criteria']
     }
     return result
   }
